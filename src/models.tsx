@@ -2,39 +2,39 @@
  * These imports are written out explicitly because they
  * need to be statically analyzable to be uploaded to CodeSandbox correctly.
  */
-import Alexander from './images/Alexander';
-import Aliza from './images/Aliza';
-import Alvin from './images/Alvin';
-import Angie from './images/Angie';
-import Arjun from './images/Arjun';
-import Blair from './images/Blair';
-import Claudia from './images/Claudia';
-import Colin from './images/Colin';
-import Ed from './images/Ed';
-import Effie from './images/Effie';
-import Eliot from './images/Eliot';
-import Fabian from './images/Fabian';
-import Gael from './images/Gael';
-import Gerard from './images/Gerard';
-import Hasan from './images/Hasan';
-import Helena from './images/Helena';
-import Ivan from './images/Ivan';
-import Katina from './images/Katina';
-import Lara from './images/Lara';
-import Leo from './images/Leo';
-import Lydia from './images/Lydia';
-import Maribel from './images/Maribel';
-import Milo from './images/Milo';
-import Myra from './images/Myra';
-import Narul from './images/Narul';
-import Norah from './images/Norah';
-import Oliver from './images/Oliver';
-import Rahul from './images/Rahul';
-import Renato from './images/Renato';
-import Steve from './images/Steve';
-import Tanya from './images/Tanya';
-import Tori from './images/Tori';
-import Vania from './images/Vania';
+import Alexander from './avatars/Alexander';
+import Aliza from './avatars/Aliza';
+import Alvin from './avatars/Alvin';
+import Angie from './avatars/Angie';
+import Arjun from './avatars/Arjun';
+import Blair from './avatars/Blair';
+import Claudia from './avatars/Claudia';
+import Colin from './avatars/Colin';
+import Ed from './avatars/Ed';
+import Effie from './avatars/Effie';
+import Eliot from './avatars/Eliot';
+import Fabian from './avatars/Fabian';
+import Gael from './avatars/Gael';
+import Gerard from './avatars/Gerard';
+import Hasan from './avatars/Hasan';
+import Helena from './avatars/Helena';
+import Ivan from './avatars/Ivan';
+import Katina from './avatars/Katina';
+import Lara from './avatars/Lara';
+import Leo from './avatars/Leo';
+import Lydia from './avatars/Lydia';
+import Maribel from './avatars/Maribel';
+import Milo from './avatars/Milo';
+import Myra from './avatars/Myra';
+import Narul from './avatars/Narul';
+import Norah from './avatars/Norah';
+import Oliver from './avatars/Oliver';
+import Rahul from './avatars/Rahul';
+import Renato from './avatars/Renato';
+import Steve from './avatars/Steve';
+import Tanya from './avatars/Tanya';
+import Tori from './avatars/Tori';
+import Vania from './avatars/Vania';
 
 export type Person = {
 	userId: string;
@@ -199,3 +199,7 @@ export function getBasicData() {
 		orderedColumnIds,
 	};
 }
+
+export type BoardProps = {
+	ref?: React.Ref<HTMLDivElement> | undefined;
+};

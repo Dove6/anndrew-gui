@@ -36,7 +36,7 @@ import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/el
 import { Box, Flex, Inline, Stack, xcss } from '@atlaskit/primitives';
 import { token } from '@atlaskit/tokens';
 
-import { type ColumnType } from '../../data/people';
+import { type ColumnType } from '../models';
 
 import { useBoardContext } from './board-context';
 import { Card } from './card';
