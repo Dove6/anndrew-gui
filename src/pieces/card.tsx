@@ -40,7 +40,7 @@ import { dropTargetForExternal } from '@atlaskit/pragmatic-drag-and-drop/externa
 import { Box, Grid, Stack, xcss } from '@atlaskit/primitives';
 import { token } from '@atlaskit/tokens';
 
-import { type ColumnType, type Person } from '../../data/people';
+import { type ColumnType, type Person } from '../models';
 
 import { useBoardContext } from './board-context';
 import { useColumnContext } from './column-context';
