@@ -10,17 +10,38 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@dnd-kit/core": "^6.3.1",
-    "@dnd-kit/utilities": "^3.2.2",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "tiny-invariant": "^1.2.0",
+    "@atlaskit/pragmatic-drag-and-drop": "1.7.7",
+    "@atlaskit/pragmatic-drag-and-drop-flourish": "2.0.8",
+    "@atlaskit/pragmatic-drag-and-drop-hitbox": "1.1.0",
+    "@atlaskit/pragmatic-drag-and-drop-live-region": "1.3.1",
+    "@atlaskit/pragmatic-drag-and-drop-auto-scroll": "2.1.2",
+    "@atlaskit/primitives": "16.1.0",
+    "@atlaskit/button": "23.5.4",
+    "@atlaskit/dropdown-menu": "16.3.17",
+    "@atlaskit/ds-lib": "5.2.0",
+    "@atlaskit/heading": "5.2.11",
+    "@atlaskit/icon": "28.5.3",
+    "@atlaskit/motion": "5.3.8",
+    "@atlaskit/platform-feature-flags": "latest",
+    "@atlaskit/pragmatic-drag-and-drop-react-drop-indicator": "3.2.8",
+    "@atlaskit/tokens": "7.1.1",
+    "@atlaskit/avatar": "25.5.1",
+    "@atlaskit/pragmatic-drag-and-drop-docs": "1.4.15",
+    "@emotion/react": "11.7.1",
+    "styled-components": "3.2.6",
+    "@atlaskit/css-reset": "latest",
+    "@atlaskit/analytics-next": "latest",
+    "@atlaskit/app-provider": "latest"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
     "@types/node": "^24.6.0",
     "@types/react": "^19.1.16",
     "@types/react-dom": "^19.1.9",
-    "@vitejs/plugin-react-swc": "^4.1.0",
+    "@vitejs/plugin-react": "^5.1.0",
     "eslint": "^9.36.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.22",
@@ -32,9 +53,6 @@
   "pnpm": {
     "overrides": {
       "vite": "npm:rolldown-vite@7.1.14"
-    },
-    "onlyBuiltDependencies": [
-      "@swc/core"
-    ]
+    }
   }
 }
