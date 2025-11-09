@@ -135,6 +135,7 @@ export function getPeople({ amount }: { amount: number }): Person[] {
 export type ColumnType = {
 	title: string;
 	columnId: string;
+	draggable?: boolean;
 	items: Person[];
 };
 export type ColumnMap = { [columnId: string]: ColumnType };
@@ -182,9 +183,15 @@ export function getBasicData() {
 			columnId: 'trello',
 			items: getPeople({ amount: 10 }),
 		},
+		main: {
+			title: 'Main',
+			columnId: 'main',
+			items: getPeople({ amount: 5 }),
+			draggable: false,
+		},
 	};
 
-	const orderedColumnIds = ['confluence', 'jira', 'trello'];
+	const orderedColumnIds = ['main', 'confluence', 'jira', 'trello'];
 
 	return {
 		columnMap,

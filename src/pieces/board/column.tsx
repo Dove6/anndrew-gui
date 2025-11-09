@@ -136,12 +136,25 @@ const stateStyles: {
 	'generate-safari-column-preview': undefined,
 };
 
+const nonDraggableStateStyles: {
+	[key in State['type']]: ReturnType<typeof xcss> | undefined;
+} = {
+	idle: undefined,
+	'is-card-over': xcss({
+		backgroundColor: 'color.background.selected.hovered',
+	}),
+	'is-column-over': undefined,
+	'generate-column-preview': undefined,
+	'generate-safari-column-preview': undefined,
+};
+
 const isDraggingStyles = xcss({
 	opacity: 0.4,
 });
 
 export const Column = memo(function Column({ column }: { column: ColumnType }) {
 	const columnId = column.columnId;
+	const isDraggable = column.draggable !== false;
 	const columnRef = useRef<HTMLDivElement | null>(null);
 	const columnInnerRef = useRef<HTMLDivElement | null>(null);
 	const headerRef = useRef<HTMLDivElement | null>(null);
@@ -156,14 +169,15 @@ export const Column = memo(function Column({ column }: { column: ColumnType }) {
 		invariant(columnInnerRef.current);
 		invariant(headerRef.current);
 		invariant(scrollableRef.current);
-		return combine(
-			registerColumn({
-				columnId,
-				entry: {
-					element: columnRef.current,
-				},
-			}),
-			draggable({
+		const fnList = [];
+		fnList.push(registerColumn({
+			columnId,
+			entry: {
+				element: columnRef.current,
+			},
+		}));
+		if (isDraggable) {
+			fnList.push(draggable({
 				element: columnRef.current,
 				dragHandle: headerRef.current,
 				getInitialData: () => ({ columnId, type: 'column', instanceId }),
@@ -194,68 +208,69 @@ export const Column = memo(function Column({ column }: { column: ColumnType }) {
 					setState(idle);
 					setIsDragging(false);
 				},
-			}),
-			dropTargetForElements({
-				element: columnInnerRef.current,
-				getData: () => ({ columnId }),
-				canDrop: ({ source }) => {
-					return source.data.instanceId === instanceId && source.data.type === 'card';
-				},
-				getIsSticky: () => true,
-				onDragEnter: () => setState(isCardOver),
-				onDragLeave: () => setState(idle),
-				onDragStart: () => setState(isCardOver),
-				onDrop: () => setState(idle),
-			}),
-			dropTargetForElements({
-				element: columnRef.current,
-				canDrop: ({ source }) => {
-					return source.data.instanceId === instanceId && source.data.type === 'column';
-				},
-				getIsSticky: () => true,
-				getData: ({ input, element }) => {
-					const data = {
-						columnId,
-					};
-					return attachClosestEdge(data, {
-						input,
-						element,
-						allowedEdges: ['left', 'right'],
-					});
-				},
-				onDragEnter: (args) => {
-					setState({
+			}));
+		}
+		fnList.push(dropTargetForElements({
+			element: columnInnerRef.current,
+			getData: () => ({ columnId }),
+			canDrop: ({ source }) => {
+				return source.data.instanceId === instanceId && source.data.type === 'card';
+			},
+			getIsSticky: () => true,
+			onDragEnter: () => setState(isCardOver),
+			onDragLeave: () => setState(idle),
+			onDragStart: () => setState(isCardOver),
+			onDrop: () => setState(idle),
+		}));
+		fnList.push(dropTargetForElements({
+			element: columnRef.current,
+			canDrop: ({ source }) => {
+				return source.data.instanceId === instanceId && source.data.type === 'column';
+			},
+			getIsSticky: () => true,
+			getData: ({ input, element }) => {
+				const data = {
+					columnId,
+				};
+				return attachClosestEdge(data, {
+					input,
+					element,
+					allowedEdges: ['left', 'right'],
+				});
+			},
+			onDragEnter: (args) => {
+				setState({
+					type: 'is-column-over',
+					closestEdge: extractClosestEdge(args.self.data),
+				});
+			},
+			onDrag: (args) => {
+				// skip react re-render if edge is not changing
+				setState((current) => {
+					const closestEdge: Edge | null = extractClosestEdge(args.self.data);
+					if (current.type === 'is-column-over' && current.closestEdge === closestEdge) {
+						return current;
+					}
+					return {
 						type: 'is-column-over',
-						closestEdge: extractClosestEdge(args.self.data),
-					});
-				},
-				onDrag: (args) => {
-					// skip react re-render if edge is not changing
-					setState((current) => {
-						const closestEdge: Edge | null = extractClosestEdge(args.self.data);
-						if (current.type === 'is-column-over' && current.closestEdge === closestEdge) {
-							return current;
-						}
-						return {
-							type: 'is-column-over',
-							closestEdge,
-						};
-					});
-				},
-				onDragLeave: () => {
-					setState(idle);
-				},
-				onDrop: () => {
-					setState(idle);
-				},
-			}),
-			autoScrollForElements({
-				element: scrollableRef.current,
-				canScroll: ({ source }) =>
-					source.data.instanceId === instanceId && source.data.type === 'card',
-			}),
-		);
-	}, [columnId, registerColumn, instanceId]);
+						closestEdge,
+					};
+				});
+			},
+			onDragLeave: () => {
+				setState(idle);
+			},
+			onDrop: () => {
+				setState(idle);
+			},
+		}));
+		fnList.push(autoScrollForElements({
+			element: scrollableRef.current,
+			canScroll: ({ source }) =>
+				source.data.instanceId === instanceId && source.data.type === 'card',
+		}));
+		return combine(...fnList);
+	}, [columnId, registerColumn, instanceId, isDraggable]);
 
 	const stableItems = useRef(column.items);
 	useEffect(() => {
@@ -280,7 +295,7 @@ export const Column = memo(function Column({ column }: { column: ColumnType }) {
 				testId={`column-${columnId}`}
 				ref={columnRef}
 				direction="column"
-				xcss={[columnStyles, stateStyles[state.type]]}
+				xcss={[columnStyles, isDraggable ? stateStyles[state.type] : nonDraggableStateStyles[state.type]]}
 			>
 				{/* This element takes up the same visual space as the column.
           We are using a separate element so we can have two drop targets
