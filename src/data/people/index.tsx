@@ -41,6 +41,7 @@ export type Person = {
 	name: string;
 	role: string;
 	avatarUrl: string;
+	isSource?: boolean;
 };
 
 const avatarMap: Record<string, string> = {
@@ -186,7 +187,7 @@ export function getBasicData() {
 		main: {
 			title: 'Main',
 			columnId: 'main',
-			items: getPeople({ amount: 5 }),
+			items: getPeople({ amount: 5 }).map(item => ({ ...item, isSource: true })),
 			draggable: false,
 		},
 	};
