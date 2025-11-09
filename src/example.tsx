@@ -266,17 +266,19 @@ export default function BoardExample() {
 				const sourceColumn = data.columnMap[startColumnId];
 				const destinationColumn = data.columnMap[finishColumnId];
 				const item: Person = sourceColumn.items[itemIndexInStartColumn];
+				const shouldCopy = item.isSource === true;
+				const itemCopy: Person = { ...item, isSource: undefined, userId: `${item.userId}-${crypto.randomUUID()}` };
 
 				const destinationItems = Array.from(destinationColumn.items);
 				// Going into the first position if no index is provided
 				const newIndexInDestination = itemIndexInFinishColumn ?? 0;
-				destinationItems.splice(newIndexInDestination, 0, item);
+				destinationItems.splice(newIndexInDestination, 0, shouldCopy ? itemCopy : item);
 
 				const updatedMap = {
 					...data.columnMap,
 					[startColumnId]: {
 						...sourceColumn,
-						items: sourceColumn.items.filter((i) => i.userId !== item.userId),
+						items: sourceColumn.items.filter((i) => shouldCopy || i.userId !== item.userId),
 					},
 					[finishColumnId]: {
 						...destinationColumn,
