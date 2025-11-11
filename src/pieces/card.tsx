@@ -1,27 +1,12 @@
-import React, {
-	forwardRef,
-	Fragment,
-	memo,
-	type Ref,
-	useCallback,
-	useEffect,
-	useRef,
-	useState,
-} from 'react';
+import React, { forwardRef, Fragment, memo, type Ref, useEffect, useRef, useState } from 'react';
 
 import ReactDOM from 'react-dom';
 import invariant from 'tiny-invariant';
 
 import Avatar from '@atlaskit/avatar';
-import { IconButton } from '@atlaskit/button/new';
-import DropdownMenu, { DropdownItem, DropdownItemGroup } from '@atlaskit/dropdown-menu';
-// eslint-disable-next-line @atlaskit/design-system/no-banned-imports
-import mergeRefs from '@atlaskit/ds-lib/merge-refs';
 import Heading from '@atlaskit/heading';
 // This is the smaller MoreIcon soon to be more easily accessible with the
 // ongoing icon project
-import MoreIcon from '@atlaskit/icon/core/migration/show-more-horizontal--editor-more';
-import { fg } from '@atlaskit/platform-feature-flags';
 import {
 	attachClosestEdge,
 	type Edge,
@@ -40,10 +25,16 @@ import { dropTargetForExternal } from '@atlaskit/pragmatic-drag-and-drop/externa
 import { Box, Grid, Stack, xcss } from '@atlaskit/primitives';
 import { token } from '@atlaskit/tokens';
 
-import { type ColumnType, type Person } from '../models';
+import { type Person } from '../models';
 
-import { useBoardContext } from './board-context';
-import { useColumnContext } from './column-context';
+import {
+	dropHandledExternallyLocalStorageKey,
+	getCard,
+	getCardDataForExternal,
+	getCardDropTarget,
+	isCard,
+	isDraggingExternalCard,
+} from './data';
 
 type State =
 	| { type: 'idle' }
@@ -81,96 +72,12 @@ const stateStyles: {
 	preview: undefined,
 };
 
-const buttonColumnStyles = xcss({
-	alignSelf: 'start',
-});
-
 type CardPrimitiveProps = {
 	closestEdge: Edge | null;
 	item: Person;
 	state: State;
 	actionMenuTriggerRef?: Ref<HTMLButtonElement>;
 };
-
-function MoveToOtherColumnItem({
-	targetColumn,
-	startIndex,
-}: {
-	targetColumn: ColumnType;
-	startIndex: number;
-}) {
-	const { moveCard } = useBoardContext();
-	const { columnId } = useColumnContext();
-
-	const onClick = useCallback(() => {
-		moveCard({
-			startColumnId: columnId,
-			finishColumnId: targetColumn.columnId,
-			itemIndexInStartColumn: startIndex,
-		});
-	}, [columnId, moveCard, startIndex, targetColumn.columnId]);
-
-	return <DropdownItem onClick={onClick}>{targetColumn.title}</DropdownItem>;
-}
-
-function LazyDropdownItems({ userId }: { userId: string }) {
-	const { getColumns, reorderCard } = useBoardContext();
-	const { columnId, getCardIndex, getNumCards } = useColumnContext();
-
-	const numCards = getNumCards();
-	const startIndex = getCardIndex(userId);
-
-	const moveToTop = useCallback(() => {
-		reorderCard({ columnId, startIndex, finishIndex: 0 });
-	}, [columnId, reorderCard, startIndex]);
-
-	const moveUp = useCallback(() => {
-		reorderCard({ columnId, startIndex, finishIndex: startIndex - 1 });
-	}, [columnId, reorderCard, startIndex]);
-
-	const moveDown = useCallback(() => {
-		reorderCard({ columnId, startIndex, finishIndex: startIndex + 1 });
-	}, [columnId, reorderCard, startIndex]);
-
-	const moveToBottom = useCallback(() => {
-		reorderCard({ columnId, startIndex, finishIndex: numCards - 1 });
-	}, [columnId, reorderCard, startIndex, numCards]);
-
-	const isMoveUpDisabled = startIndex === 0;
-	const isMoveDownDisabled = startIndex === numCards - 1;
-
-	const moveColumnOptions = getColumns().filter((column) => column.columnId !== columnId);
-
-	return (
-		<Fragment>
-			<DropdownItemGroup title="Reorder">
-				<DropdownItem onClick={moveToTop} isDisabled={isMoveUpDisabled}>
-					Move to top
-				</DropdownItem>
-				<DropdownItem onClick={moveUp} isDisabled={isMoveUpDisabled}>
-					Move up
-				</DropdownItem>
-				<DropdownItem onClick={moveDown} isDisabled={isMoveDownDisabled}>
-					Move down
-				</DropdownItem>
-				<DropdownItem onClick={moveToBottom} isDisabled={isMoveDownDisabled}>
-					Move to bottom
-				</DropdownItem>
-			</DropdownItemGroup>
-			{moveColumnOptions.length ? (
-				<DropdownItemGroup title="Move to">
-					{moveColumnOptions.map((column) => (
-						<MoveToOtherColumnItem
-							key={column.columnId}
-							targetColumn={column}
-							startIndex={startIndex}
-						/>
-					))}
-				</DropdownItemGroup>
-			) : null}
-		</Fragment>
-	);
-}
 
 const CardPrimitive = forwardRef<HTMLDivElement, CardPrimitiveProps>(function CardPrimitive(
 	{ closestEdge, item, state, actionMenuTriggerRef },
@@ -182,7 +89,7 @@ const CardPrimitive = forwardRef<HTMLDivElement, CardPrimitiveProps>(function Ca
 		<Grid
 			ref={ref}
 			testId={`item-${userId}`}
-			templateColumns="auto 1fr auto"
+			templateColumns="auto 1fr"
 			columnGap="space.100"
 			alignItems="center"
 			xcss={[baseStyles, stateStyles[state.type]]}
@@ -190,7 +97,6 @@ const CardPrimitive = forwardRef<HTMLDivElement, CardPrimitiveProps>(function Ca
 			<Box as="span" xcss={noPointerEventsStyles}>
 				<Avatar size="large" src={avatarUrl} />
 			</Box>
-
 			<Stack space="space.050" grow="fill">
 				<Heading size="xsmall" as="span">
 					{name}
@@ -199,52 +105,16 @@ const CardPrimitive = forwardRef<HTMLDivElement, CardPrimitiveProps>(function Ca
 					{role}
 				</Box>
 			</Stack>
-			<Box xcss={buttonColumnStyles}>
-				<DropdownMenu
-					trigger={({ triggerRef, ...triggerProps }) => (
-						<IconButton
-							ref={
-								actionMenuTriggerRef
-									? mergeRefs([triggerRef, actionMenuTriggerRef])
-									: // Workaround for IconButton typing issue
-										mergeRefs([triggerRef])
-							}
-							icon={(iconProps) => <MoreIcon {...iconProps} size="small" />}
-							label={`Move ${name}`}
-							appearance="default"
-							spacing="compact"
-							{...triggerProps}
-						/>
-					)}
-					shouldRenderToParent={fg('should-render-to-parent-should-be-true-design-syst')}
-				>
-					<LazyDropdownItems userId={userId} />
-				</DropdownMenu>
-			</Box>
 			{closestEdge && <DropIndicator edge={closestEdge} gap={token('space.100', '0')} />}
 		</Grid>
 	);
 });
 
-export const Card = memo(function Card({ item }: { item: Person }) {
+export const Card = memo(function Card({ item, columnId }: { item: Person; columnId: string }) {
 	const ref = useRef<HTMLDivElement | null>(null);
 	const { userId } = item;
 	const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
 	const [state, setState] = useState<State>(idleState);
-
-	const actionMenuTriggerRef = useRef<HTMLButtonElement>(null);
-	const { instanceId, registerCard } = useBoardContext();
-	useEffect(() => {
-		invariant(actionMenuTriggerRef.current);
-		invariant(ref.current);
-		return registerCard({
-			cardId: userId,
-			entry: {
-				element: ref.current,
-				actionMenuTrigger: actionMenuTriggerRef.current,
-			},
-		});
-	}, [registerCard, userId]);
 
 	useEffect(() => {
 		const element = ref.current;
@@ -252,7 +122,8 @@ export const Card = memo(function Card({ item }: { item: Person }) {
 		return combine(
 			draggable({
 				element: element,
-				getInitialData: () => ({ type: 'card', itemId: userId, instanceId }),
+				getInitialData: () => getCard({ cardId: userId, columnId }),
+				getInitialDataForExternal: () => getCardDataForExternal(item),
 				onGenerateDragPreview: ({ location, source, nativeSetDragImage }) => {
 					const rect = source.element.getBoundingClientRect();
 
@@ -268,21 +139,25 @@ export const Card = memo(function Card({ item }: { item: Person }) {
 						},
 					});
 				},
+				onDragStart: () => {
+					setState(draggingState);
 
-				onDragStart: () => setState(draggingState),
+					// resetting this whenever a drag starts
+					localStorage.removeItem(dropHandledExternallyLocalStorageKey);
+				},
 				onDrop: () => setState(idleState),
-			}),
-			dropTargetForExternal({
-				element: element,
 			}),
 			dropTargetForElements({
 				element: element,
 				canDrop: ({ source }) => {
-					return source.data.instanceId === instanceId && source.data.type === 'card';
+					return (
+						// for this example, only accepting cards coming from the same column
+						isCard(source.data) //&& source.data.columnId === columnId
+					);
 				},
 				getIsSticky: () => true,
 				getData: ({ input, element }) => {
-					const data = { type: 'card', itemId: userId };
+					const data = getCardDropTarget({ cardId: userId, columnId });
 
 					return attachClosestEdge(data, {
 						input,
@@ -291,12 +166,12 @@ export const Card = memo(function Card({ item }: { item: Person }) {
 					});
 				},
 				onDragEnter: (args) => {
-					if (args.source.data.itemId !== userId) {
+					if (args.source.data.cardId !== userId) {
 						setClosestEdge(extractClosestEdge(args.self.data));
 					}
 				},
 				onDrag: (args) => {
-					if (args.source.data.itemId !== userId) {
+					if (args.source.data.cardId !== userId) {
 						setClosestEdge(extractClosestEdge(args.self.data));
 					}
 				},
@@ -307,18 +182,39 @@ export const Card = memo(function Card({ item }: { item: Person }) {
 					setClosestEdge(null);
 				},
 			}),
+			dropTargetForExternal({
+				element,
+				canDrop: isDraggingExternalCard,
+				getDropEffect: () => 'move',
+				getIsSticky: () => true,
+				getData: ({ input, element }) => {
+					const data = getCardDropTarget({ cardId: userId, columnId });
+
+					return attachClosestEdge(data, {
+						input,
+						element,
+						allowedEdges: ['top', 'bottom'],
+					});
+				},
+				onDragEnter: (args) => {
+					setClosestEdge(extractClosestEdge(args.self.data));
+				},
+				onDrag: (args) => {
+					setClosestEdge(extractClosestEdge(args.self.data));
+				},
+				onDragLeave: () => {
+					setClosestEdge(null);
+				},
+				onDrop: () => {
+					setClosestEdge(null);
+				},
+			}),
 		);
-	}, [instanceId, item, userId]);
+	}, [item, userId, columnId]);
 
 	return (
 		<Fragment>
-			<CardPrimitive
-				ref={ref}
-				item={item}
-				state={state}
-				closestEdge={closestEdge}
-				actionMenuTriggerRef={actionMenuTriggerRef}
-			/>
+			<CardPrimitive ref={ref} item={item} state={state} closestEdge={closestEdge} />
 			{state.type === 'preview' &&
 				ReactDOM.createPortal(
 					<Box

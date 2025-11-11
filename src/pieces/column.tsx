@@ -1,46 +1,35 @@
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { createPortal } from 'react-dom';
 import invariant from 'tiny-invariant';
 
-import { IconButton } from '@atlaskit/button/new';
-import DropdownMenu, {
-	type CustomTriggerProps,
-	DropdownItem,
-	DropdownItemGroup,
-} from '@atlaskit/dropdown-menu';
-// eslint-disable-next-line @atlaskit/design-system/no-banned-imports
-import mergeRefs from '@atlaskit/ds-lib/merge-refs';
 import Heading from '@atlaskit/heading';
-// This is the smaller MoreIcon soon to be more easily accessible with the
-// ongoing icon project
-import MoreIcon from '@atlaskit/icon/core/migration/show-more-horizontal--editor-more';
 import { easeInOut } from '@atlaskit/motion/curves';
 import { durations } from '@atlaskit/motion/durations';
-import { fg } from '@atlaskit/platform-feature-flags';
-import { autoScrollForElements } from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element';
-import {
-	attachClosestEdge,
-	type Edge,
-	extractClosestEdge,
-} from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
-import { DropIndicator } from '@atlaskit/pragmatic-drag-and-drop-react-drop-indicator/box';
+import { extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
+import { reorderWithEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/util/reorder-with-edge';
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import {
-	draggable,
 	dropTargetForElements,
+	type ElementDragPayload,
+	monitorForElements,
 } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
-import { centerUnderPointer } from '@atlaskit/pragmatic-drag-and-drop/element/center-under-pointer';
-import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview';
+import { dropTargetForExternal } from '@atlaskit/pragmatic-drag-and-drop/external/adapter';
+import { reorder } from '@atlaskit/pragmatic-drag-and-drop/reorder';
 // eslint-disable-next-line @atlaskit/design-system/no-emotion-primitives -- to be migrated to @atlaskit/primitives/compiled – go/akcss
-import { Box, Flex, Inline, Stack, xcss } from '@atlaskit/primitives';
-import { token } from '@atlaskit/tokens';
+import { Box, Inline, Stack, xcss } from '@atlaskit/primitives';
 
-import { type ColumnType } from '../models';
+import { getPeopleFromPosition, getPersonFromPosition, type Person } from '../models';
 
-import { useBoardContext } from './board-context';
 import { Card } from './card';
-import { ColumnContext, type ColumnContextProps, useColumnContext } from './column-context';
+import {
+	dropHandledExternallyLocalStorageKey,
+	getColumnDropTarget,
+	getDroppedExternalCardId,
+	isCard,
+	isCardDropTarget,
+	isColumnDropTarget,
+	isDraggingExternalCard,
+} from './data';
 
 const columnStyles = xcss({
 	width: '250px',
@@ -49,21 +38,6 @@ const columnStyles = xcss({
 	// eslint-disable-next-line @atlaskit/ui-styling-standard/no-unsafe-values, @atlaskit/ui-styling-standard/no-imported-style-values
 	transition: `background ${durations.medium}ms ${easeInOut}`,
 	position: 'relative',
-	/**
-	 * TODO: figure out hover color.
-	 * There is no `elevation.surface.sunken.hovered` token,
-	 * so leaving this for now.
-	 */
-});
-
-const stackStyles = xcss({
-	// allow the container to be shrunk by a parent height
-	// https://www.joshwcomeau.com/css/interactive-guide-to-flexbox/#the-minimum-size-gotcha-11
-	minHeight: '0',
-
-	// ensure our card list grows to be all the available space
-	// so that users can easily drop on en empty list
-	flexGrow: 1,
 });
 
 const scrollContainerStyles = xcss({
@@ -73,7 +47,7 @@ const scrollContainerStyles = xcss({
 
 const cardListStyles = xcss({
 	boxSizing: 'border-box',
-	minHeight: '100%',
+	minHeight: '200px',
 	padding: 'space.100',
 	gap: 'space.100',
 });
@@ -86,18 +60,7 @@ const columnHeaderStyles = xcss({
 	userSelect: 'none',
 });
 
-/**
- * Note: not making `'is-dragging'` a `State` as it is
- * a _parallel_ state to `'is-column-over'`.
- *
- * Our board allows you to be over the column that is currently dragging
- */
-type State =
-	| { type: 'idle' }
-	| { type: 'is-card-over' }
-	| { type: 'is-column-over'; closestEdge: Edge | null }
-	| { type: 'generate-safari-column-preview'; container: HTMLElement }
-	| { type: 'generate-column-preview' };
+type State = { type: 'idle' } | { type: 'is-card-over' };
 
 // preventing re-renders with stable state objects
 const idle: State = { type: 'idle' };
@@ -106,308 +69,301 @@ const isCardOver: State = { type: 'is-card-over' };
 const stateStyles: {
 	[key in State['type']]: ReturnType<typeof xcss> | undefined;
 } = {
-	idle: xcss({
-		cursor: 'grab',
-	}),
-	'is-card-over': xcss({
-		backgroundColor: 'color.background.selected.hovered',
-	}),
-	'is-column-over': undefined,
-	/**
-	 * **Browser bug workaround**
-	 *
-	 * _Problem_
-	 * When generating a drag preview for an element
-	 * that has an inner scroll container, the preview can include content
-	 * vertically before or after the element
-	 *
-	 * _Fix_
-	 * We make the column a new stacking context when the preview is being generated.
-	 * We are not making a new stacking context at all times, as this _can_ mess up
-	 * other layering components inside of your card
-	 *
-	 * _Fix: Safari_
-	 * We have not found a great workaround yet. So for now we are just rendering
-	 * a custom drag preview
-	 */
-	'generate-column-preview': xcss({
-		isolation: 'isolate',
-	}),
-	'generate-safari-column-preview': undefined,
-};
-
-const nonDraggableStateStyles: {
-	[key in State['type']]: ReturnType<typeof xcss> | undefined;
-} = {
 	idle: undefined,
 	'is-card-over': xcss({
 		backgroundColor: 'color.background.selected.hovered',
 	}),
-	'is-column-over': undefined,
-	'generate-column-preview': undefined,
-	'generate-safari-column-preview': undefined,
 };
 
-const isDraggingStyles = xcss({
-	opacity: 0.4,
-});
+/**
+ * This function leverages local storage to ensure that columns do not
+ * use duplicate people.
+ * (unless there are more people used then we have available to use!)
+ */
+function getPeopleFromSharedPool(): Person[] {
+	const localStoragePeopleIndexKey = 'people-index';
 
-export const Column = memo(function Column({ column }: { column: ColumnType }) {
-	const columnId = column.columnId;
-	const isDraggable = column.draggable !== false;
+	if (typeof window === 'undefined') {
+		return [];
+	}
+	const startIndex: number = (() => {
+		const value = Number(localStorage.getItem(localStoragePeopleIndexKey));
+
+		if (Number.isInteger(value)) {
+			return value;
+		}
+
+		return 0;
+	})();
+
+	const amount = 4;
+	localStorage.setItem(localStoragePeopleIndexKey, `${startIndex + amount}`);
+
+	return getPeopleFromPosition({ amount, startIndex });
+}
+export function Column({ columnId }: { columnId: string }) {
+	const [items, setItems] = useState<Person[]>(() => getPeopleFromSharedPool());
+
 	const columnRef = useRef<HTMLDivElement | null>(null);
-	const columnInnerRef = useRef<HTMLDivElement | null>(null);
 	const headerRef = useRef<HTMLDivElement | null>(null);
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
 	const [state, setState] = useState<State>(idle);
-	const [isDragging, setIsDragging] = useState<boolean>(false);
 
-	const { instanceId, registerColumn } = useBoardContext();
+	const isHomeColumn = useCallback(({ source }: { source: ElementDragPayload }): boolean => {
+		const column = columnRef.current;
+		invariant(column);
+		return isCard(source.data);// && column.contains(source.element);
+	}, []);
+
+	// in Safari `document.body.scrollHeight` is not updated
+	// by the time a `useLayoutEffect` runs.
+	// For simplicity, using a `useEffect` instead.
+	useEffect(() => {
+		const isInIframe: boolean = typeof window !== 'undefined' && window.parent !== window;
+
+		if (!isInIframe) {
+			return;
+		}
+		const frame = window.frameElement;
+		if (!frame) {
+			return;
+		}
+
+		const updateIframeHeight = () => {
+			// Adding a little buffer as there seems to be some
+			// sub pixel rounding at various zoom levels.
+			// If we don't add the buffer, a scroll bar can appear
+			const buffer = 1;
+			frame.setAttribute('height', `${document.body.scrollHeight + buffer}`);
+		};
+
+		updateIframeHeight();
+
+		const observer = new MutationObserver(() => updateIframeHeight());
+
+		observer.observe(document.body, {
+			childList: true,
+			subtree: true,
+			attributes: false,
+		});
+
+		return () => observer.disconnect();
+	}, []);
 
 	useEffect(() => {
-		invariant(columnRef.current);
-		invariant(columnInnerRef.current);
-		invariant(headerRef.current);
-		invariant(scrollableRef.current);
-		const fnList = [];
-		fnList.push(registerColumn({
-			columnId,
-			entry: {
-				element: columnRef.current,
-			},
-		}));
-		if (isDraggable) {
-			fnList.push(draggable({
-				element: columnRef.current,
-				dragHandle: headerRef.current,
-				getInitialData: () => ({ columnId, type: 'column', instanceId }),
-				onGenerateDragPreview: ({ nativeSetDragImage }) => {
-					const isSafari: boolean =
-						navigator.userAgent.includes('AppleWebKit') && !navigator.userAgent.includes('Chrome');
+		const column = columnRef.current;
+		const header = headerRef.current;
+		const scrollable = scrollableRef.current;
+		invariant(column);
+		invariant(header);
+		invariant(scrollable);
 
-					if (!isSafari) {
-						setState({ type: 'generate-column-preview' });
+		return combine(
+			dropTargetForElements({
+				element: column,
+				canDrop: isHomeColumn,
+				getData: () => getColumnDropTarget({ columnId }),
+				getIsSticky: () => true,
+				onDragEnter: () => setState(isCardOver),
+				onDragLeave: () => setState(idle),
+				onDragStart: () => {
+					setState(isCardOver);
+				},
+				onDrop: ({ source, location }) => {
+					setState(idle);
+
+					const data = source.data;
+					if (!isCard(data)) {
 						return;
 					}
-					setCustomNativeDragPreview({
-						getOffset: centerUnderPointer,
-						render: ({ container }) => {
-							setState({
-								type: 'generate-safari-column-preview',
-								container,
-							});
-							return () => setState(idle);
-						},
-						nativeSetDragImage,
-					});
-				},
-				onDragStart: () => {
-					setIsDragging(true);
-				},
-				onDrop() {
-					setState(idle);
-					setIsDragging(false);
-				},
-			}));
-		}
-		fnList.push(dropTargetForElements({
-			element: columnInnerRef.current,
-			getData: () => ({ columnId }),
-			canDrop: ({ source }) => {
-				return source.data.instanceId === instanceId && source.data.type === 'card';
-			},
-			getIsSticky: () => true,
-			onDragEnter: () => setState(isCardOver),
-			onDragLeave: () => setState(idle),
-			onDragStart: () => setState(isCardOver),
-			onDrop: () => setState(idle),
-		}));
-		fnList.push(dropTargetForElements({
-			element: columnRef.current,
-			canDrop: ({ source }) => {
-				return source.data.instanceId === instanceId && source.data.type === 'column';
-			},
-			getIsSticky: () => true,
-			getData: ({ input, element }) => {
-				const data = {
-					columnId,
-				};
-				return attachClosestEdge(data, {
-					input,
-					element,
-					allowedEdges: ['left', 'right'],
-				});
-			},
-			onDragEnter: (args) => {
-				setState({
-					type: 'is-column-over',
-					closestEdge: extractClosestEdge(args.self.data),
-				});
-			},
-			onDrag: (args) => {
-				// skip react re-render if edge is not changing
-				setState((current) => {
-					const closestEdge: Edge | null = extractClosestEdge(args.self.data);
-					if (current.type === 'is-column-over' && current.closestEdge === closestEdge) {
-						return current;
+
+					const cardId = data.cardId;
+					if (!cardId) {
+						return;
 					}
-					return {
-						type: 'is-column-over',
-						closestEdge,
-					};
-				});
-			},
-			onDragLeave: () => {
-				setState(idle);
-			},
-			onDrop: () => {
-				setState(idle);
-			},
-		}));
-		fnList.push(autoScrollForElements({
-			element: scrollableRef.current,
-			canScroll: ({ source }) =>
-				source.data.instanceId === instanceId && source.data.type === 'card',
-		}));
-		return combine(...fnList);
-	}, [columnId, registerColumn, instanceId, isDraggable]);
 
-	const stableItems = useRef(column.items);
+					// Note: could use `zod` or similar to validate shape
+					const position = Number(cardId.replace('id:', ''));
+
+					if (!Number.isInteger(position)) {
+						// external value was not formed how we expected.
+						return;
+					}
+
+					const person = getPersonFromPosition({ position });
+
+					const innerMost = location.current.dropTargets[0];
+					// this should not happen
+					if (!innerMost) {
+						return;
+					}
+
+					const dropTargetData = innerMost.data;
+
+					// dropped on a card: swap as needed
+					if (isCardDropTarget(dropTargetData)) {
+						const closestEdge = extractClosestEdge(dropTargetData);
+						// data setup issue
+						invariant(closestEdge);
+
+						const indexOfTarget = items.findIndex((item) => item.userId === dropTargetData.cardId);
+
+						const newIndex = closestEdge === 'bottom' ? indexOfTarget + 1 : indexOfTarget;
+
+						const newItems = Array.from(items);
+						newItems.splice(newIndex, 0, person);
+
+						setItems(newItems);
+						return;
+					}
+
+					// dropped on the column: move item into last place
+					if (isColumnDropTarget(dropTargetData)) {
+						const newItems = [...items, person];
+						setItems(newItems);
+						return;
+					}
+				},
+			}),
+			dropTargetForExternal({
+				element: column,
+				getDropEffect: () => 'move',
+				canDrop: isDraggingExternalCard,
+				getData: () => getColumnDropTarget({ columnId }),
+				getIsSticky: () => true,
+				onDragEnter: () => setState(isCardOver),
+				onDragLeave: () => setState(idle),
+				onDrop: ({ source, location }) => {
+					setState(idle);
+
+					const cardId = getDroppedExternalCardId({ source });
+					if (!cardId) {
+						return;
+					}
+
+					// Note: could use `zod` or similar to validate shape
+					const position = Number(cardId.replace('id:', ''));
+
+					if (!Number.isInteger(position)) {
+						// external value was not formed how we expected.
+						return;
+					}
+
+					const person = getPersonFromPosition({ position });
+
+					const innerMost = location.current.dropTargets[0];
+					// this should not happen
+					if (!innerMost) {
+						return;
+					}
+
+					const dropTargetData = innerMost.data;
+
+					function update(people: Person[]) {
+						setItems(people);
+
+						// note: no longer using this signal
+						// due to timing issue in browsers
+						localStorage.setItem(dropHandledExternallyLocalStorageKey, person.userId);
+					}
+
+					// dropped on a card: swap as needed
+					if (isCardDropTarget(dropTargetData)) {
+						const closestEdge = extractClosestEdge(dropTargetData);
+						// data setup issue
+						invariant(closestEdge);
+
+						const indexOfTarget = items.findIndex((item) => item.userId === dropTargetData.cardId);
+
+						const newIndex = closestEdge === 'bottom' ? indexOfTarget + 1 : indexOfTarget;
+
+						const newItems = Array.from(items);
+						newItems.splice(newIndex, 0, person);
+
+						update(newItems);
+						return;
+					}
+
+					// dropped on the column: move item into last place
+					if (isColumnDropTarget(dropTargetData)) {
+						const newItems = [...items, person];
+
+						update(newItems);
+						return;
+					}
+				},
+			}),
+		);
+	}, [items, columnId, isHomeColumn]);
+
 	useEffect(() => {
-		stableItems.current = column.items;
-	}, [column.items]);
+		return monitorForElements({
+			canMonitor: isHomeColumn,
+			onDrop({ location, source }) {
+				// drop handled locally
+				// if (location.current.dropTargets.length) {
+				// 	return;
+				// }
+				const column = columnRef.current;
+				invariant(column);
+				if (!column.contains(source.element)) {
+					return;
+				}
 
-	const getCardIndex = useCallback((userId: string) => {
-		return stableItems.current.findIndex((item) => item.userId === userId);
-	}, []);
+				/**
+				 * Was previously looking at `localStorage` in `onDrop` but this
+				 * does not work `Firefox@125.0` and `Safari @17.4.1` due to a
+				 * timing bug with drag events.
+				 *
+				 * - 🍎 https://bugs.webkit.org/show_bug.cgi?id=274069
+				 * - 🦊 https://bugzilla.mozilla.org/show_bug.cgi?id=1896323
+				 *
+				 * Could listen for "storage" events to know when a card is handled
+				 * externally. There is a non-trivial amount of code for this as you
+				 * also need to handle that the timing differences
+				 *  - In Chrome you don't want to remove the dragging item when you
+				 *    get the "storage" event, as then you remove the dragging item
+				 *    and you no longer get a "dragend" (until our fallback drag end
+				 *    logic kicks in).
+				 *
+				 * For now using the _weak_ signal of `dropEffect` (not public API)
+				 * */
+				const wasHandledExternally: boolean = (() => {
+					const event = window.event;
+					if (!(event instanceof DragEvent)) {
+						return false;
+					}
+					return event.dataTransfer?.dropEffect === 'move';
+				})();
 
-	const getNumCards = useCallback(() => {
-		return stableItems.current.length;
-	}, []);
+				if (!wasHandledExternally) {
+					return;
+				}
 
-	const contextValue: ColumnContextProps = useMemo(() => {
-		return { columnId, getCardIndex, getNumCards };
-	}, [columnId, getCardIndex, getNumCards]);
+				const data = source.data;
+				if (!isCard(data)) {
+					return;
+				}
+
+				setItems((current) => current.filter((item) => item.userId !== data.cardId));
+			},
+		});
+	}, [isHomeColumn]);
 
 	return (
-		<ColumnContext.Provider value={contextValue}>
-			<Flex
-				testId={`column-${columnId}`}
-				ref={columnRef}
-				direction="column"
-				xcss={[columnStyles, isDraggable ? stateStyles[state.type] : nonDraggableStateStyles[state.type]]}
-			>
-				{/* This element takes up the same visual space as the column.
-          We are using a separate element so we can have two drop targets
-          that take up the same visual space (one for cards, one for columns)
-        */}
-				<Stack xcss={stackStyles} ref={columnInnerRef}>
-					<Stack xcss={[stackStyles, isDragging ? isDraggingStyles : undefined]}>
-						<Inline
-							xcss={columnHeaderStyles}
-							ref={headerRef}
-							testId={`column-header-${columnId}`}
-							spread="space-between"
-							alignBlock="center"
-						>
-							<Heading size="xxsmall" as="span" testId={`column-header-title-${columnId}`}>
-								{column.title}
-							</Heading>
-							<ActionMenu />
-						</Inline>
-						<Box xcss={scrollContainerStyles} ref={scrollableRef}>
-							<Stack xcss={cardListStyles} space="space.100">
-								{column.items.map((item) => (
-									<Card item={item} key={item.userId} />
-								))}
-							</Stack>
-						</Box>
-					</Stack>
+		<Stack ref={columnRef} xcss={[columnStyles, stateStyles[state.type]]}>
+			<Inline xcss={columnHeaderStyles} ref={headerRef} spread="space-between" alignBlock="center">
+				<Heading size="xxsmall" as="span">
+					{columnId}
+				</Heading>
+			</Inline>
+			<Box xcss={scrollContainerStyles} ref={scrollableRef}>
+				<Stack xcss={cardListStyles} space="space.100">
+					{items.map((item) => (
+						<Card item={item} key={item.userId} columnId={columnId} />
+					))}
 				</Stack>
-				{state.type === 'is-column-over' && state.closestEdge && (
-					<DropIndicator edge={state.closestEdge} gap={token('space.200', '0')} />
-				)}
-			</Flex>
-			{state.type === 'generate-safari-column-preview'
-				? createPortal(<SafariColumnPreview column={column} />, state.container)
-				: null}
-		</ColumnContext.Provider>
-	);
-});
-
-const safariPreviewStyles = xcss({
-	width: '250px',
-	backgroundColor: 'elevation.surface.sunken',
-	borderRadius: 'radius.small',
-	padding: 'space.200',
-});
-
-function SafariColumnPreview({ column }: { column: ColumnType }) {
-	return (
-		<Box xcss={[columnHeaderStyles, safariPreviewStyles]}>
-			<Heading size="xxsmall" as="span">
-				{column.title}
-			</Heading>
-		</Box>
-	);
-}
-
-function ActionMenu() {
-	return (
-		<DropdownMenu
-			trigger={DropdownMenuTrigger}
-			shouldRenderToParent={fg('should-render-to-parent-should-be-true-design-syst')}
-		>
-			<ActionMenuItems />
-		</DropdownMenu>
-	);
-}
-
-function ActionMenuItems() {
-	const { columnId } = useColumnContext();
-	const { getColumns, reorderColumn } = useBoardContext();
-
-	const columns = getColumns();
-	const startIndex = columns.findIndex((column) => column.columnId === columnId);
-
-	const moveLeft = useCallback(() => {
-		reorderColumn({
-			startIndex,
-			finishIndex: startIndex - 1,
-		});
-	}, [reorderColumn, startIndex]);
-
-	const moveRight = useCallback(() => {
-		reorderColumn({
-			startIndex,
-			finishIndex: startIndex + 1,
-		});
-	}, [reorderColumn, startIndex]);
-
-	const isMoveLeftDisabled = startIndex === 0;
-	const isMoveRightDisabled = startIndex === columns.length - 1;
-
-	return (
-		<DropdownItemGroup>
-			<DropdownItem onClick={moveLeft} isDisabled={isMoveLeftDisabled}>
-				Move left
-			</DropdownItem>
-			<DropdownItem onClick={moveRight} isDisabled={isMoveRightDisabled}>
-				Move right
-			</DropdownItem>
-		</DropdownItemGroup>
-	);
-}
-
-function DropdownMenuTrigger({ triggerRef, ...triggerProps }: CustomTriggerProps) {
-	return (
-		<IconButton
-			ref={mergeRefs([triggerRef])}
-			appearance="subtle"
-			label="Actions"
-			spacing="compact"
-			icon={(iconProps) => <MoreIcon {...iconProps} size="small" />}
-			{...triggerProps}
-		/>
+			</Box>
+		</Stack>
 	);
 }
