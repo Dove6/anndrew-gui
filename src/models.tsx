@@ -36,12 +36,22 @@ import Tanya from './avatars/Tanya';
 import Tori from './avatars/Tori';
 import Vania from './avatars/Vania';
 
-export type Person = {
+export type CardData = ImageCard | FrameCard;
+
+export type ImageCard = {
+	type: 'image-card';
 	userId: string;
 	name: string;
 	role: string;
 	avatarUrl: string;
-	isSource?: boolean;
+};
+
+export type FrameCard = {
+	type: 'frame-card';
+	userId: string;
+	name: string;
+	role: string;
+	avatarUrl: string;
 };
 
 const avatarMap: Record<string, string> = {
@@ -101,17 +111,18 @@ let sharedLookupIndex: number = 0;
 /**
  * Note: this does not use randomness so that it is stable for VR tests
  */
-export function getPerson(): Person {
+export function getPerson(): CardData {
 	sharedLookupIndex++;
 	return getPersonFromPosition({ position: sharedLookupIndex });
 }
 
-export function getPersonFromPosition({ position }: { position: number }): Person {
+export function getPersonFromPosition({ position }: { position: number }): CardData {
 	// use the next name
 	const name = names[position % names.length];
 	// use the next role
 	const role = roles[position % roles.length];
 	return {
+		type: 'frame-card',
 		userId: `id:${position}`,
 		name,
 		role,
@@ -125,21 +136,31 @@ export function getPeopleFromPosition({
 }: {
 	amount: number;
 	startIndex: number;
-}): Person[] {
+}): CardData[] {
 	return Array.from({ length: amount }, () => getPersonFromPosition({ position: startIndex++ }));
 }
 
-export function getPeople({ amount }: { amount: number }): Person[] {
+export function getPeople({ amount }: { amount: number }): CardData[] {
 	return Array.from({ length: amount }, () => getPerson());
 }
 
-export type ColumnType = {
-	title: string;
-	columnId: string;
-	draggable?: boolean;
-	items: Person[];
-};
-export type ColumnMap = { [columnId: string]: ColumnType };
+export type ColumnData = ImageColumn | EventColumn;
+
+export type ImageColumn = {
+	type: 'image-column',
+	columnId: string,
+	title: string,
+	items: CardData[],
+}
+
+export type EventColumn = {
+	type: 'event-column',
+	columnId: string,
+	title: string,
+	items: CardData[],
+}
+
+export type ColumnMap = { [columnId: string]: ColumnData };
 
 export function getData({
 	columnCount,
@@ -151,7 +172,8 @@ export function getData({
 	const columnMap: ColumnMap = {};
 
 	for (let i = 0; i < columnCount; i++) {
-		const column: ColumnType = {
+		const column: ColumnData = {
+			type: 'event-column',
 			title: `Column ${i}`,
 			columnId: `column-${i}`,
 			items: getPeople({ amount: itemsPerColumn }),
@@ -170,25 +192,28 @@ export function getData({
 export function getBasicData() {
 	const columnMap: ColumnMap = {
 		confluence: {
+			type: 'event-column',
 			title: 'Confluence',
 			columnId: 'confluence',
 			items: getPeople({ amount: 10 }),
 		},
 		jira: {
+			type: 'event-column',
 			title: 'Jira',
 			columnId: 'jira',
 			items: getPeople({ amount: 10 }),
 		},
 		trello: {
+			type: 'event-column',
 			title: 'Trello',
 			columnId: 'trello',
 			items: getPeople({ amount: 10 }),
 		},
 		main: {
+			type: 'image-column',
 			title: 'Main',
 			columnId: 'main',
-			items: getPeople({ amount: 5 }).map(item => ({ ...item, isSource: true })),
-			draggable: false,
+			items: getPeople({ amount: 5 }).map(item => ({ ...item, type: 'image-card' })),
 		},
 	};
 
