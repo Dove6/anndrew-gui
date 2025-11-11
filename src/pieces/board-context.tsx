@@ -4,10 +4,10 @@ import invariant from 'tiny-invariant';
 
 import type { CleanupFn } from '@atlaskit/pragmatic-drag-and-drop/types';
 
-import type { ColumnType } from '../models';
+import type { ColumnData } from '../models';
 
 export type BoardContextValue = {
-	getColumns: () => ColumnType[];
+	getColumns: () => ColumnData[];
 
 	reorderColumn: (args: { startIndex: number; finishIndex: number }) => void;
 

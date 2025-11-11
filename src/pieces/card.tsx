@@ -1,4 +1,4 @@
-import React, {
+import {
 	forwardRef,
 	Fragment,
 	memo,
@@ -40,7 +40,7 @@ import { dropTargetForExternal } from '@atlaskit/pragmatic-drag-and-drop/externa
 import { Box, Grid, Stack, xcss } from '@atlaskit/primitives';
 import { token } from '@atlaskit/tokens';
 
-import { type ColumnType, type Person } from '../models';
+import { type ColumnData, type CardData } from '../models';
 
 import { useBoardContext } from './board-context';
 import { useColumnContext } from './column-context';
@@ -87,7 +87,7 @@ const buttonColumnStyles = xcss({
 
 type CardPrimitiveProps = {
 	closestEdge: Edge | null;
-	item: Person;
+	item: CardData;
 	state: State;
 	actionMenuTriggerRef?: Ref<HTMLButtonElement>;
 };
@@ -96,7 +96,7 @@ function MoveToOtherColumnItem({
 	targetColumn,
 	startIndex,
 }: {
-	targetColumn: ColumnType;
+	targetColumn: ColumnData;
 	startIndex: number;
 }) {
 	const { moveCard } = useBoardContext();
@@ -226,7 +226,7 @@ const CardPrimitive = forwardRef<HTMLDivElement, CardPrimitiveProps>(function Ca
 	);
 });
 
-export const Card = memo(function Card({ item }: { item: Person }) {
+export const Card = memo(function Card({ item }: { item: CardData }) {
 	const ref = useRef<HTMLDivElement | null>(null);
 	const { userId } = item;
 	const [closestEdge, setClosestEdge] = useState<Edge | null>(null);

@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { createPortal } from 'react-dom';
 import invariant from 'tiny-invariant';
@@ -36,7 +36,7 @@ import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/el
 import { Box, Flex, Inline, Stack, xcss } from '@atlaskit/primitives';
 import { token } from '@atlaskit/tokens';
 
-import { type ColumnType } from '../models';
+import { type ColumnData } from '../models';
 
 import { useBoardContext } from './board-context';
 import { Card } from './card';
@@ -152,9 +152,9 @@ const isDraggingStyles = xcss({
 	opacity: 0.4,
 });
 
-export const Column = memo(function Column({ column }: { column: ColumnType }) {
+export const Column = memo(function Column({ column }: { column: ColumnData }) {
 	const columnId = column.columnId;
-	const isDraggable = column.draggable !== false;
+	const isDraggable = column.type !== 'image-column';
 	const columnRef = useRef<HTMLDivElement | null>(null);
 	const columnInnerRef = useRef<HTMLDivElement | null>(null);
 	const headerRef = useRef<HTMLDivElement | null>(null);
@@ -342,7 +342,7 @@ const safariPreviewStyles = xcss({
 	padding: 'space.200',
 });
 
-function SafariColumnPreview({ column }: { column: ColumnType }) {
+function SafariColumnPreview({ column }: { column: ColumnData }) {
 	return (
 		<Box xcss={[columnHeaderStyles, safariPreviewStyles]}>
 			<Heading size="xxsmall" as="span">
