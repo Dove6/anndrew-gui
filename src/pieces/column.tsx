@@ -56,6 +56,20 @@ const columnStyles = xcss({
 	 */
 });
 
+const imageColumnStyles = xcss({
+	width: '250px',
+	backgroundColor: 'color.background.discovery',
+	borderRadius: 'radius.xlarge',
+	// eslint-disable-next-line @atlaskit/ui-styling-standard/no-unsafe-values, @atlaskit/ui-styling-standard/no-imported-style-values
+	transition: `background ${durations.medium}ms ${easeInOut}`,
+	position: 'relative',
+	/**
+	 * TODO: figure out hover color.
+	 * There is no `elevation.surface.sunken.hovered` token,
+	 * so leaving this for now.
+	 */
+});
+
 const stackStyles = xcss({
 	// allow the container to be shrunk by a parent height
 	// https://www.joshwcomeau.com/css/interactive-guide-to-flexbox/#the-minimum-size-gotcha-11
@@ -154,6 +168,7 @@ const isDraggingStyles = xcss({
 
 export const Column = memo(function Column({ column }: { column: ColumnData }) {
 	const columnId = column.columnId;
+	const isImageColumn = column.type === 'image-column';
 	const isDraggable = column.type !== 'image-column';
 	const columnRef = useRef<HTMLDivElement | null>(null);
 	const columnInnerRef = useRef<HTMLDivElement | null>(null);
@@ -180,7 +195,7 @@ export const Column = memo(function Column({ column }: { column: ColumnData }) {
 			fnList.push(draggable({
 				element: columnRef.current,
 				dragHandle: headerRef.current,
-				getInitialData: () => ({ columnId, type: 'column', instanceId }),
+				getInitialData: () => ({ columnId, type: 'column', subtype: column.type, instanceId }),
 				onGenerateDragPreview: ({ nativeSetDragImage }) => {
 					const isSafari: boolean =
 						navigator.userAgent.includes('AppleWebKit') && !navigator.userAgent.includes('Chrome');
@@ -214,7 +229,7 @@ export const Column = memo(function Column({ column }: { column: ColumnData }) {
 			element: columnInnerRef.current,
 			getData: () => ({ columnId }),
 			canDrop: ({ source }) => {
-				return source.data.instanceId === instanceId && source.data.type === 'card';
+				return source.data.instanceId === instanceId && source.data.type === 'card' && (source.data.subtype === 'image-card' || column.type === 'event-column');
 			},
 			getIsSticky: () => true,
 			onDragEnter: () => setState(isCardOver),
@@ -225,7 +240,7 @@ export const Column = memo(function Column({ column }: { column: ColumnData }) {
 		fnList.push(dropTargetForElements({
 			element: columnRef.current,
 			canDrop: ({ source }) => {
-				return source.data.instanceId === instanceId && source.data.type === 'column';
+				return source.data.instanceId === instanceId && source.data.type === 'column' && (source.data.subtype === 'image-column' || column.type === 'event-column');
 			},
 			getIsSticky: () => true,
 			getData: ({ input, element }) => {
@@ -295,7 +310,7 @@ export const Column = memo(function Column({ column }: { column: ColumnData }) {
 				testId={`column-${columnId}`}
 				ref={columnRef}
 				direction="column"
-				xcss={[columnStyles, isDraggable ? stateStyles[state.type] : nonDraggableStateStyles[state.type]]}
+				xcss={[isImageColumn ? imageColumnStyles : columnStyles, isDraggable ? stateStyles[state.type] : nonDraggableStateStyles[state.type]]}
 			>
 				{/* This element takes up the same visual space as the column.
           We are using a separate element so we can have two drop targets
