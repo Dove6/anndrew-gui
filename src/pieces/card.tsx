@@ -66,6 +66,17 @@ const baseStyles = xcss({
 	},
 });
 
+const imageBaseStyles = xcss({
+	width: '100%',
+	padding: 'space.100',
+	backgroundColor: 'color.background.brand.subtlest',
+	borderRadius: 'radius.large',
+	position: 'relative',
+	':hover': {
+		backgroundColor: 'color.background.brand.subtlest.hovered',
+	},
+});
+
 const stateStyles: {
 	[Key in State['type']]: ReturnType<typeof xcss> | undefined;
 } = {
@@ -177,6 +188,7 @@ const CardPrimitive = forwardRef<HTMLDivElement, CardPrimitiveProps>(function Ca
 	ref,
 ) {
 	const { avatarUrl, name, role, userId } = item;
+	const isImageCard = item.type === 'image-card';
 
 	return (
 		<Grid
@@ -185,7 +197,7 @@ const CardPrimitive = forwardRef<HTMLDivElement, CardPrimitiveProps>(function Ca
 			templateColumns="auto 1fr auto"
 			columnGap="space.100"
 			alignItems="center"
-			xcss={[baseStyles, stateStyles[state.type]]}
+			xcss={[isImageCard ? imageBaseStyles : baseStyles, stateStyles[state.type]]}
 		>
 			<Box as="span" xcss={noPointerEventsStyles}>
 				<Avatar size="large" src={avatarUrl} />
@@ -252,7 +264,7 @@ export const Card = memo(function Card({ item }: { item: CardData }) {
 		return combine(
 			draggable({
 				element: element,
-				getInitialData: () => ({ type: 'card', itemId: userId, instanceId }),
+				getInitialData: () => ({ type: 'card', subtype: item.type, itemId: userId, instanceId }),
 				onGenerateDragPreview: ({ location, source, nativeSetDragImage }) => {
 					const rect = source.element.getBoundingClientRect();
 
@@ -278,7 +290,7 @@ export const Card = memo(function Card({ item }: { item: CardData }) {
 			dropTargetForElements({
 				element: element,
 				canDrop: ({ source }) => {
-					return source.data.instanceId === instanceId && source.data.type === 'card';
+					return source.data.instanceId === instanceId && source.data.type === 'card' && (source.data.subtype === 'image-card' || item.type === 'frame-card');
 				},
 				getIsSticky: () => true,
 				getData: ({ input, element }) => {
