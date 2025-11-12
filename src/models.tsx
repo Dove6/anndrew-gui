@@ -1,7 +1,189 @@
-/**
- * These imports are written out explicitly because they
- * need to be statically analyzable to be uploaded to CodeSandbox correctly.
- */
+export type BoardState = {
+	columnMap: ColumnMap;
+	orderedColumnIds: string[];
+
+	fps: number,
+	opacity: number,
+	author: string,
+	description: string,
+
+	lastOperation: Operation | null;
+};
+
+export type ColumnMap = { [columnId: string]: ColumnData };
+
+export type ColumnData = ImageColumn | EventColumn;
+
+export type ImageColumn = {
+	type: 'image-column';
+	columnId: string;
+	items: CardData[];
+}
+
+export type EventColumn = {
+	type: 'event-column';
+	columnId: string;
+	items: CardData[];
+
+	name: string;
+	loopLength: number;
+	opacity: number;
+}
+
+export type CardData = ImageCard | FrameCard;
+
+export type ImageCard = {
+	type: 'image-card';
+	userId: string;
+
+	name: string,
+	contentUrl: string,
+	offset: {
+		x: number,
+		y: number,
+	},
+};
+
+export type FrameCard = {
+	type: 'frame-card';
+	userId: string;
+
+	name: string,
+	imageRef: ImageCard,
+	offset: {
+		x: number,
+		y: number,
+	},
+	sfx: string[],
+	opacity: number,
+};
+
+export function getInitialBoardState(): BoardState {
+	const images = new Array(5).fill(null).map(_ => getImage());
+
+	const getFrames = (length: number) => new Array(length).fill(null).map(_ => getFrame(images[Math.trunc(Math.random() * 100) % images.length]))
+
+	const columns: ColumnData[] = [
+		{
+			type: 'event-column',
+			name: 'ONCLICK',
+			columnId: 'onclick',
+			items: getFrames(5),
+			loopLength: 0,
+			opacity: 255,
+		},
+		{
+			type: 'event-column',
+			name: 'SPEAKING',
+			columnId: 'speaking',
+			items: getFrames(6),
+			loopLength: 0,
+			opacity: 255,
+		},
+		{
+			type: 'event-column',
+			name: 'ONFOCUS',
+			columnId: 'onfocus',
+			items: getFrames(2),
+			loopLength: 0,
+			opacity: 255,
+		},
+		{
+			type: 'image-column',
+			columnId: 'main',
+			items: images,
+		},
+	];
+
+	const columnMap: ColumnMap = Object.fromEntries<ColumnData>(columns.map(column => [column.columnId, column]));
+	columns.sort((a, b) => a.type !== b.type ? (a.type == 'event-column' ? 1 : -1) : 0);
+	const orderedColumnIds = columns.map(column => column.columnId);
+
+	console.log({
+		columnMap,
+		orderedColumnIds,
+
+		fps: 16,
+		opacity: 255,
+		author: 'You',
+		description: '',
+
+		lastOperation: null,
+	});
+
+	return {
+		columnMap,
+		orderedColumnIds,
+
+		fps: 16,
+		opacity: 255,
+		author: 'You',
+		description: '',
+
+		lastOperation: null,
+	};
+}
+
+export const getNextCardId = () => Math.trunc(Math.random() * 1000000);
+
+export function getImage(): ImageCard {
+	const position = getNextCardId();
+	const name = names[position % names.length];
+	return {
+		type: 'image-card',
+		userId: `id:${position}`,
+		name,
+		offset: { x: 0, y: 0 },
+		contentUrl: avatarMap[name],
+	};
+}
+
+export function getFrame(image: ImageCard): FrameCard {
+	const position = getNextCardId();
+	const role = roles[position % roles.length];
+	return {
+		type: 'frame-card',
+		userId: `id:${position}`,
+		name: `${image.name} / ${role}`,
+		offset: { x: 0, y: 0 },
+		imageRef: image,
+		opacity: 255,
+		sfx: [],
+	};
+}
+
+export type BoardProps = {
+	ref?: React.Ref<HTMLDivElement> | undefined;
+};
+
+export type Outcome =
+	| {
+		type: 'column-reorder';
+		columnId: string;
+		startIndex: number;
+		finishIndex: number;
+	}
+	| {
+		type: 'card-reorder';
+		columnId: string;
+		startIndex: number;
+		finishIndex: number;
+	}
+	| {
+		type: 'card-move';
+		finishColumnId: string;
+		itemIndexInStartColumn: number;
+		itemIndexInFinishColumn: number;
+	};
+
+export type Trigger = 'pointer' | 'keyboard';
+
+export type Operation = {
+	trigger: Trigger;
+	outcome: Outcome;
+};
+
+
 import Alexander from './avatars/Alexander';
 import Aliza from './avatars/Aliza';
 import Alvin from './avatars/Alvin';
@@ -35,24 +217,6 @@ import Steve from './avatars/Steve';
 import Tanya from './avatars/Tanya';
 import Tori from './avatars/Tori';
 import Vania from './avatars/Vania';
-
-export type CardData = ImageCard | FrameCard;
-
-export type ImageCard = {
-	type: 'image-card';
-	userId: string;
-	name: string;
-	role: string;
-	avatarUrl: string;
-};
-
-export type FrameCard = {
-	type: 'frame-card';
-	userId: string;
-	name: string;
-	role: string;
-	avatarUrl: string;
-};
 
 const avatarMap: Record<string, string> = {
 	Alexander,
@@ -105,126 +269,3 @@ const roles: string[] = [
 	'Product Manager',
 	'Program Manager',
 ];
-
-let sharedLookupIndex: number = 0;
-
-/**
- * Note: this does not use randomness so that it is stable for VR tests
- */
-export function getPerson(): CardData {
-	sharedLookupIndex++;
-	return getPersonFromPosition({ position: sharedLookupIndex });
-}
-
-export function getPersonFromPosition({ position }: { position: number }): CardData {
-	// use the next name
-	const name = names[position % names.length];
-	// use the next role
-	const role = roles[position % roles.length];
-	return {
-		type: 'frame-card',
-		userId: `id:${position}`,
-		name,
-		role,
-		avatarUrl: avatarMap[name],
-	};
-}
-
-export function getPeopleFromPosition({
-	amount,
-	startIndex,
-}: {
-	amount: number;
-	startIndex: number;
-}): CardData[] {
-	return Array.from({ length: amount }, () => getPersonFromPosition({ position: startIndex++ }));
-}
-
-export function getPeople({ amount }: { amount: number }): CardData[] {
-	return Array.from({ length: amount }, () => getPerson());
-}
-
-export type ColumnData = ImageColumn | EventColumn;
-
-export type ImageColumn = {
-	type: 'image-column',
-	columnId: string,
-	title: string,
-	items: CardData[],
-}
-
-export type EventColumn = {
-	type: 'event-column',
-	columnId: string,
-	title: string,
-	items: CardData[],
-}
-
-export type ColumnMap = { [columnId: string]: ColumnData };
-
-export function getData({
-	columnCount,
-	itemsPerColumn,
-}: {
-	columnCount: number;
-	itemsPerColumn: number;
-}) {
-	const columnMap: ColumnMap = {};
-
-	for (let i = 0; i < columnCount; i++) {
-		const column: ColumnData = {
-			type: 'event-column',
-			title: `Column ${i}`,
-			columnId: `column-${i}`,
-			items: getPeople({ amount: itemsPerColumn }),
-		};
-		columnMap[column.columnId] = column;
-	}
-	const orderedColumnIds = Object.keys(columnMap);
-
-	return {
-		columnMap,
-		orderedColumnIds,
-		lastOperation: null,
-	};
-}
-
-export function getBasicData() {
-	const columnMap: ColumnMap = {
-		confluence: {
-			type: 'event-column',
-			title: 'Confluence',
-			columnId: 'confluence',
-			items: getPeople({ amount: 10 }),
-		},
-		jira: {
-			type: 'event-column',
-			title: 'Jira',
-			columnId: 'jira',
-			items: getPeople({ amount: 10 }),
-		},
-		trello: {
-			type: 'event-column',
-			title: 'Trello',
-			columnId: 'trello',
-			items: getPeople({ amount: 10 }),
-		},
-		main: {
-			type: 'image-column',
-			title: 'Main',
-			columnId: 'main',
-			items: getPeople({ amount: 5 }).map(item => ({ ...item, type: 'image-card' })),
-		},
-	};
-
-	const orderedColumnIds = ['main', 'confluence', 'jira', 'trello'];
-
-	return {
-		columnMap,
-		orderedColumnIds,
-	};
-}
-
-export type BoardProps = {
-	ref?: React.Ref<HTMLDivElement> | undefined;
-};

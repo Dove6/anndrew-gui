@@ -11,53 +11,14 @@ import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { reorder } from '@atlaskit/pragmatic-drag-and-drop/reorder';
 
-import { type ColumnMap, type ColumnData, getBasicData, type CardData, type FrameCard } from './models';
+import { type ColumnMap, type ColumnData, getInitialBoardState, type CardData, type FrameCard, type BoardState, type Trigger, type Outcome, getFrame, getNextCardId } from './models';
 import Board from './pieces/board';
 import { BoardContext, type BoardContextValue } from './pieces/board-context';
 import { Column } from './pieces/column';
 import { createRegistry } from './pieces/registry';
 
-type Outcome =
-	| {
-			type: 'column-reorder';
-			columnId: string;
-			startIndex: number;
-			finishIndex: number;
-	  }
-	| {
-			type: 'card-reorder';
-			columnId: string;
-			startIndex: number;
-			finishIndex: number;
-	  }
-	| {
-			type: 'card-move';
-			finishColumnId: string;
-			itemIndexInStartColumn: number;
-			itemIndexInFinishColumn: number;
-	  };
-
-type Trigger = 'pointer' | 'keyboard';
-
-type Operation = {
-	trigger: Trigger;
-	outcome: Outcome;
-};
-
-type BoardState = {
-	columnMap: ColumnMap;
-	orderedColumnIds: string[];
-	lastOperation: Operation | null;
-};
-
 export default function BoardExample() {
-	const [data, setData] = useState<BoardState>(() => {
-		const base = getBasicData();
-		return {
-			...base,
-			lastOperation: null,
-		};
-	});
+	const [data, setData] = useState<BoardState>(getInitialBoardState);
 
 	const stableData = useRef(data);
 	useEffect(() => {
@@ -84,7 +45,7 @@ export default function BoardExample() {
 			triggerPostMoveFlash(entry.element);
 
 			liveRegion.announce(
-				`You've moved ${sourceColumn.title} from position ${
+				`You've moved ${sourceColumn.columnId} from position ${
 					startIndex + 1
 				} to position ${finishIndex + 1} of ${orderedColumnIds.length}.`,
 			);
@@ -109,7 +70,7 @@ export default function BoardExample() {
 			liveRegion.announce(
 				`You've moved ${item.name} from position ${
 					startIndex + 1
-				} to position ${finishIndex + 1} of ${column.items.length} in the ${column.title} column.`,
+				} to position ${finishIndex + 1} of ${column.items.length} in the ${column.columnId} column.`,
 			);
 
 			return;
@@ -137,7 +98,7 @@ export default function BoardExample() {
 			liveRegion.announce(
 				`You've moved ${item.name} from position ${
 					itemIndexInStartColumn + 1
-				} to position ${finishPosition} in the ${destinationColumn.title} column.`,
+				} to position ${finishPosition} in the ${destinationColumn.columnId} column.`,
 			);
 
 			/**
@@ -267,7 +228,7 @@ export default function BoardExample() {
 				const destinationColumn = data.columnMap[finishColumnId];
 				const item: CardData = sourceColumn.items[itemIndexInStartColumn];
 				const shouldCopy = item.type === 'image-card';
-				const itemCopy: FrameCard = { ...item, type: 'frame-card', userId: `${item.userId}-${crypto.randomUUID()}` };
+				const itemCopy: FrameCard = item.type === 'image-card' ? getFrame(item) : { ...item, userId: `id:${getNextCardId()}` };
 
 				const destinationItems = Array.from(destinationColumn.items);
 				// Going into the first position if no index is provided
@@ -354,6 +315,7 @@ export default function BoardExample() {
 						const sourceId = startColumnRecord.data.columnId;
 						invariant(typeof sourceId === 'string');
 						const sourceColumn = data.columnMap[sourceId];
+						console.log(sourceId, data.columnMap);
 						const itemIndex = sourceColumn.items.findIndex((item) => item.userId === itemId);
 
 						if (location.current.dropTargets.length === 1) {
