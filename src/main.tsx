@@ -1,4 +1,4 @@
-import React, { StrictMode } from 'react';
+import { StrictMode } from 'react';
 import ReactDOM from 'react-dom';
 import '@atlaskit/css-reset';
 import AppProvider from '@atlaskit/app-provider';
