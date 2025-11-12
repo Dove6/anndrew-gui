@@ -176,7 +176,7 @@ const isDraggingStyles = xcss({
 	opacity: 0.4,
 });
 
-export const Column = memo(function Column({ column }: { column: ColumnData }) {
+export const Column = ({ column }: { column: ColumnData }) => {
 	const columnId = column.columnId;
 	const isImageColumn = column.type === 'image-column';
 	const isDraggable = !isImageColumn;
@@ -379,7 +379,7 @@ export const Column = memo(function Column({ column }: { column: ColumnData }) {
 				: null}
 		</ColumnContext.Provider>
 	);
-});
+};
 
 const safariPreviewStyles = xcss({
 	width: '250px',
@@ -411,10 +411,12 @@ function ActionMenu() {
 
 function ActionMenuItems() {
 	const { columnId } = useColumnContext();
-	const { getColumns, reorderColumn } = useBoardContext();
+	const { getColumns, reorderColumn, removeColumn } = useBoardContext();
 
 	const columns = getColumns();
 	const startIndex = columns.findIndex((column) => column.columnId === columnId);
+	const currentColumn = columns[startIndex];
+	const isImageColumn = currentColumn.type === 'image-column';
 
 	const moveLeft = useCallback(() => {
 		reorderColumn({
@@ -430,8 +432,15 @@ function ActionMenuItems() {
 		});
 	}, [reorderColumn, startIndex]);
 
+	const removeCurrent = useCallback(() => {
+		removeColumn({
+			startIndex,
+		});
+	}, [removeColumn, startIndex]);
+
 	const isMoveLeftDisabled = startIndex === 0 || columns[startIndex - 1].type === 'image-column';
 	const isMoveRightDisabled = startIndex === columns.length - 1;
+	const isRemoveCurrentDisabled = isImageColumn;
 
 	return (
 		<DropdownItemGroup>
@@ -440,6 +449,9 @@ function ActionMenuItems() {
 			</DropdownItem>
 			<DropdownItem onClick={moveRight} isDisabled={isMoveRightDisabled}>
 				Move right
+			</DropdownItem>
+			<DropdownItem onClick={removeCurrent} isDisabled={isRemoveCurrentDisabled}>
+				Remove
 			</DropdownItem>
 		</DropdownItemGroup>
 	);

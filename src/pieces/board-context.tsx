@@ -13,6 +13,15 @@ export type BoardContextValue = {
 
 	reorderCard: (args: { columnId: string; startIndex: number; finishIndex: number }) => void;
 
+	insertColumn: (args: {
+		column: ColumnData,
+		finishIndex: number;
+	}) => void;
+
+	removeColumn: (args: {
+		startIndex: number;
+	}) => void;
+
 	moveCard: (args: {
 		startColumnId: string;
 		finishColumnId: string;
@@ -24,6 +33,11 @@ export type BoardContextValue = {
 		item: CardData,
 		finishColumnId: string;
 		itemIndexInFinishColumn?: number;
+	}) => void;
+
+	removeCard: (args: {
+		startColumnId: string;
+		itemIndexInStartColumn: number;
 	}) => void;
 
 	registerCard: (args: {

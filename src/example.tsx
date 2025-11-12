@@ -58,6 +58,32 @@ export default function BoardExample() {
 			return;
 		}
 
+		if (outcome.type === 'column-insert') {
+			const { finishIndex } = outcome;
+
+			const { columnMap, orderedColumnIds } = stableData.current;
+			const sourceColumn = columnMap[orderedColumnIds[finishIndex]];
+
+			const entry = registry.getColumn(sourceColumn.columnId);
+			triggerPostMoveFlash(entry.element);
+
+			liveRegion.announce(
+				`You've inserted ${sourceColumn.columnId} to position ${finishIndex + 1} of ${orderedColumnIds.length}.`,
+			);
+
+			return;
+		}
+
+		if (outcome.type === 'column-remove') {
+			const { startIndex } = outcome;
+
+			liveRegion.announce(
+				`You've removed column from position ${startIndex + 1}.`,
+			);
+
+			return;
+		}
+
 		if (outcome.type === 'card-reorder') {
 			const { columnId, startIndex, finishIndex } = outcome;
 
@@ -114,6 +140,56 @@ export default function BoardExample() {
 
 			return;
 		}
+
+		if (outcome.type === 'card-insert') {
+			const { finishColumnId, itemIndexInFinishColumn } = outcome;
+
+			const data = stableData.current;
+			const destinationColumn = data.columnMap[finishColumnId];
+			const item = destinationColumn.items[itemIndexInFinishColumn];
+
+			const finishPosition =
+				typeof itemIndexInFinishColumn === 'number'
+					? itemIndexInFinishColumn + 1
+					: destinationColumn.items.length;
+
+			const entry = registry.getCard(item.cardId);
+			triggerPostMoveFlash(entry.element);
+
+			if (trigger !== 'keyboard') {
+				return;
+			}
+
+			liveRegion.announce(
+				`You've inserted ${item.name} to position ${finishPosition} in the ${destinationColumn.columnId} column.`,
+			);
+
+			/**
+			 * Because the card has moved column, it will have remounted.
+			 * This means we need to manually restore focus to it.
+			 */
+			entry.actionMenuTrigger.focus();
+
+			return;
+		}
+
+		if (outcome.type === 'card-remove') {
+			const { startColumnId, itemIndexInStartColumn } = outcome;
+			const entry = registry.getColumn(startColumnId);
+			triggerPostMoveFlash(entry.element);
+
+			if (trigger !== 'keyboard') {
+				return;
+			}
+
+			liveRegion.announce(
+				`You've removed item from position ${
+					itemIndexInStartColumn + 1
+				} in the ${startColumnId} column.`,
+			);
+
+			return;
+		}
 	}, [lastOperation, registry]);
 
 	useEffect(() => {
@@ -160,6 +236,84 @@ export default function BoardExample() {
 		[],
 	);
 
+	const insertColumn = useCallback(
+		({
+			column,
+			finishIndex,
+			trigger = 'keyboard',
+		}: {
+			column: ColumnData;
+			finishIndex: number;
+			trigger?: Trigger;
+		}) => {
+			const columnId = column.columnId;
+
+			setData((data) => {
+				const outcome: Outcome = {
+					type: 'column-insert',
+					columnId,
+					finishIndex,
+				};
+
+				return {
+					...data,
+					columnMap: { ...data.columnMap, [columnId]: column },
+					orderedColumnIds: data.orderedColumnIds.splice(finishIndex, 0, columnId),
+					lastOperation: {
+						outcome,
+						trigger: trigger,
+					},
+				};
+			});
+		},
+		[],
+	);
+
+	const removeColumn = useCallback(
+		({
+			startIndex,
+			trigger = 'keyboard',
+		}: {
+			startIndex: number;
+			trigger?: Trigger;
+		}) => {
+			const columnId = data.orderedColumnIds[startIndex];
+			const column = data.columnMap[columnId];
+
+			setData((data) => {
+				const outcome: Outcome = {
+					type: 'column-remove',
+					columnId: data.orderedColumnIds[startIndex],
+					startIndex,
+				};
+
+				if (column.type === 'image-column') {
+					return {
+						...data,
+						orderedColumnIds: [],
+						columnMap: {},
+						lastOperation: {
+							outcome,
+							trigger,
+						}
+					}
+				}
+
+				const {[columnId]: _, ...updatedColumnMap} = data.columnMap;
+				return {
+					...data,
+					orderedColumnIds: data.orderedColumnIds.filter(id => id !== columnId),
+					columnMap: updatedColumnMap,
+					lastOperation: {
+						outcome,
+						trigger,
+					},
+				};
+			});
+		},
+		[],
+	);
+
 	const reorderCard = useCallback(
 		({
 			columnId,
@@ -180,16 +334,6 @@ export default function BoardExample() {
 					finishIndex,
 				});
 
-				const updatedSourceColumn: ColumnData = {
-					...sourceColumn,
-					items: updatedItems,
-				};
-
-				const updatedMap: ColumnMap = {
-					...data.columnMap,
-					[columnId]: updatedSourceColumn,
-				};
-
 				const outcome: Outcome | null = {
 					type: 'card-reorder',
 					columnId,
@@ -199,9 +343,15 @@ export default function BoardExample() {
 
 				return {
 					...data,
-					columnMap: updatedMap,
+					columnMap: {
+						...data.columnMap,
+						[columnId]: {
+							...sourceColumn,
+							items: updatedItems,
+						},
+					},
 					lastOperation: {
-						trigger: trigger,
+						trigger,
 						outcome,
 					},
 				};
@@ -312,6 +462,53 @@ export default function BoardExample() {
 					lastOperation: {
 						outcome,
 						trigger,
+					},
+				};
+			});
+		},
+		[],
+	);
+
+	const removeCard = useCallback(
+		({
+			startColumnId,
+			itemIndexInStartColumn,
+			trigger = 'keyboard',
+		}: {
+			startColumnId: string;
+			itemIndexInStartColumn: number;
+			trigger?: Trigger,
+		}) => {
+			setData((data) => {
+				const sourceColumn = data.columnMap[startColumnId];
+				const item: CardData = sourceColumn.items[itemIndexInStartColumn];
+
+				const updatedMap = {
+					...data.columnMap,
+					[startColumnId]: {
+						...sourceColumn,
+						items: sourceColumn.items.filter((i) => i.cardId !== item.cardId),
+					},
+				};
+				if (item.type === 'image-card') {
+					for (const columnId of Object.keys(updatedMap)) {
+						updatedMap[columnId].items = updatedMap[columnId].items
+							.filter(card => !(card.type === 'frame-card' && card.imageRef.cardId === item.cardId));
+					}
+				}
+
+				const outcome: Outcome | null = {
+					type: 'card-remove',
+					startColumnId,
+					itemIndexInStartColumn,
+				};
+
+				return {
+					...data,
+					columnMap: updatedMap,
+					lastOperation: {
+						outcome,
+						trigger: trigger,
 					},
 				};
 			});
@@ -537,20 +734,23 @@ export default function BoardExample() {
 				},
 			}),
 		);
-	}, [data, instanceId, moveCard, insertCard, reorderCard, reorderColumn]);
+	}, [data, instanceId, moveCard, insertCard, removeCard, reorderCard, insertColumn, removeColumn, reorderColumn]);
 
 	const contextValue: BoardContextValue = useMemo(() => {
 		return {
 			getColumns,
 			reorderColumn,
+			insertColumn,
+			removeColumn,
 			reorderCard,
 			moveCard,
 			insertCard,
+			removeCard,
 			registerCard: registry.registerCard,
 			registerColumn: registry.registerColumn,
 			instanceId,
 		};
-	}, [getColumns, reorderColumn, reorderCard, registry, moveCard, insertCard, instanceId]);
+	}, [getColumns, reorderColumn, reorderCard, registry, insertColumn, removeColumn, moveCard, insertCard, removeCard, instanceId]);
 
 	return (
 		<BoardContext.Provider value={contextValue}>

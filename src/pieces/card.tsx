@@ -144,7 +144,7 @@ function MoveToOtherColumnItem({
 }
 
 function LazyDropdownItems({ cardId }: { cardId: string }) {
-	const { getColumns, reorderCard } = useBoardContext();
+	const { getColumns, reorderCard, removeCard } = useBoardContext();
 	const { columnId, getCardIndex, getNumCards } = useColumnContext();
 
 	const numCards = getNumCards();
@@ -166,6 +166,10 @@ function LazyDropdownItems({ cardId }: { cardId: string }) {
 		reorderCard({ columnId, startIndex, finishIndex: numCards - 1 });
 	}, [columnId, reorderCard, startIndex, numCards]);
 
+	const remove = useCallback(() => {
+		removeCard({ startColumnId: columnId, itemIndexInStartColumn: startIndex });
+	}, [columnId, removeCard, startIndex]);
+
 	const isMoveUpDisabled = startIndex === 0;
 	const isMoveDownDisabled = startIndex === numCards - 1;
 
@@ -180,6 +184,9 @@ function LazyDropdownItems({ cardId }: { cardId: string }) {
 
 	return (
 		<Fragment>
+			<DropdownItem onClick={remove}>
+				Remove
+			</DropdownItem>
 			<DropdownItemGroup title="Reorder">
 				<DropdownItem onClick={moveToTop} isDisabled={isMoveUpDisabled}>
 					Move to top
