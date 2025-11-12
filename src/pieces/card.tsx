@@ -233,7 +233,7 @@ const ImageCardPrimitive = (
 			xcss={[imageBaseStyles, stateStyles[state.type]]}
 		>
 			<Box as="span" xcss={noPointerEventsStyles}>
-				<Avatar size="large" src={contentUrl} />
+				<Avatar size="xlarge" appearance="square" src={contentUrl} />
 			</Box>
 
 			<Stack space="space.050" grow="fill">
@@ -286,7 +286,7 @@ const FrameCardPrimitive = (
 			xcss={[baseStyles, stateStyles[state.type]]}
 		>
 			<Box as="span" xcss={noPointerEventsStyles}>
-				<Avatar size="large" src={imageRef.contentUrl} />
+				<Avatar size="large" appearance="square" src={imageRef.contentUrl} />
 			</Box>
 
 			<Stack space="space.050" grow="fill">
