@@ -11,6 +11,8 @@ type BoardProps = {
 };
 
 const boardStyles = xcss({
+	paddingInlineStart: 'space.200',
+	paddingInlineEnd: 'space.200',
 	display: 'flex',
 	justifyContent: 'center',
 	gap: 'space.200',

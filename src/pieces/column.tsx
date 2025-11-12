@@ -46,6 +46,8 @@ import { ColumnContext, type ColumnContextProps, useColumnContext } from './colu
 
 const frameColumnStyles = xcss({
 	width: '250px',
+	minWidth: '250px',
+	maxWidth: '250px',
 	backgroundColor: 'elevation.surface.sunken',
 	borderRadius: 'radius.xlarge',
 	// eslint-disable-next-line @atlaskit/ui-styling-standard/no-unsafe-values, @atlaskit/ui-styling-standard/no-imported-style-values
@@ -60,6 +62,8 @@ const frameColumnStyles = xcss({
 
 const imageColumnStyles = xcss({
 	width: '300px',
+	minWidth: '300px',
+	maxWidth: '300px',
 	backgroundColor: 'color.background.discovery',
 	borderRadius: 'radius.xlarge',
 	// eslint-disable-next-line @atlaskit/ui-styling-standard/no-unsafe-values, @atlaskit/ui-styling-standard/no-imported-style-values

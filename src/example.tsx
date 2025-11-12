@@ -21,6 +21,17 @@ import { BoardContext, type BoardContextValue } from './pieces/board-context';
 import { Column } from './pieces/column';
 import { createRegistry } from './pieces/registry';
 import General from './pieces/general';
+import { ColumnAdder } from './pieces/column-adder';
+import { Box, xcss } from '@atlaskit/primitives';
+
+const eventScrollContainerStyles = xcss({
+	maxWidth: '100%',
+	overflowX: 'auto',
+	display: 'flex',
+	gap: 'space.200',
+	flexDirection: 'row',
+	height: '720px',
+});
 
 export default function BoardExample() {
 	const [data, setData] = useState<BoardState>(getInitialBoardState);
@@ -50,8 +61,7 @@ export default function BoardExample() {
 			triggerPostMoveFlash(entry.element);
 
 			liveRegion.announce(
-				`You've moved ${sourceColumn.columnId} from position ${
-					startIndex + 1
+				`You've moved ${sourceColumn.columnId} from position ${startIndex + 1
 				} to position ${finishIndex + 1} of ${orderedColumnIds.length}.`,
 			);
 
@@ -62,6 +72,8 @@ export default function BoardExample() {
 			const { finishIndex } = outcome;
 
 			const { columnMap, orderedColumnIds } = stableData.current;
+			console.log(orderedColumnIds);
+			console.log(columnMap);
 			const sourceColumn = columnMap[orderedColumnIds[finishIndex]];
 
 			const entry = registry.getColumn(sourceColumn.columnId);
@@ -99,8 +111,7 @@ export default function BoardExample() {
 			}
 
 			liveRegion.announce(
-				`You've moved ${item.name} from position ${
-					startIndex + 1
+				`You've moved ${item.name} from position ${startIndex + 1
 				} to position ${finishIndex + 1} of ${column.items.length} in the ${column.columnId} column.`,
 			);
 
@@ -127,8 +138,7 @@ export default function BoardExample() {
 			}
 
 			liveRegion.announce(
-				`You've moved ${item.name} from position ${
-					itemIndexInStartColumn + 1
+				`You've moved ${item.name} from position ${itemIndexInStartColumn + 1
 				} to position ${finishPosition} in the ${destinationColumn.columnId} column.`,
 			);
 
@@ -183,8 +193,7 @@ export default function BoardExample() {
 			}
 
 			liveRegion.announce(
-				`You've removed item from position ${
-					itemIndexInStartColumn + 1
+				`You've removed item from position ${itemIndexInStartColumn + 1
 				} in the ${startColumnId} column.`,
 			);
 
@@ -247,18 +256,18 @@ export default function BoardExample() {
 			trigger?: Trigger;
 		}) => {
 			const columnId = column.columnId;
-
 			setData((data) => {
 				const outcome: Outcome = {
 					type: 'column-insert',
 					columnId,
 					finishIndex,
 				};
-
+				const orderedColumnIds = [...data.orderedColumnIds];
+				orderedColumnIds.splice(finishIndex, 0, columnId);
 				return {
 					...data,
 					columnMap: { ...data.columnMap, [columnId]: column },
-					orderedColumnIds: data.orderedColumnIds.splice(finishIndex, 0, columnId),
+					orderedColumnIds,
 					lastOperation: {
 						outcome,
 						trigger: trigger,
@@ -277,10 +286,10 @@ export default function BoardExample() {
 			startIndex: number;
 			trigger?: Trigger;
 		}) => {
-			const columnId = data.orderedColumnIds[startIndex];
-			const column = data.columnMap[columnId];
-
 			setData((data) => {
+				const columnId = data.orderedColumnIds[startIndex];
+				const column = data.columnMap[columnId];
+
 				const outcome: Outcome = {
 					type: 'column-remove',
 					columnId: data.orderedColumnIds[startIndex],
@@ -299,7 +308,7 @@ export default function BoardExample() {
 					}
 				}
 
-				const {[columnId]: _, ...updatedColumnMap} = data.columnMap;
+				const { [columnId]: _, ...updatedColumnMap } = data.columnMap;
 				return {
 					...data,
 					orderedColumnIds: data.orderedColumnIds.filter(id => id !== columnId),
@@ -385,7 +394,7 @@ export default function BoardExample() {
 				const shouldCopy = item.type === 'image-card';
 				const itemCopy: FrameCard = item.type === 'image-card' ? getFrame(item) : { ...item, cardId: `id:${getNextCardId()}` };
 
-				const destinationItems = Array.from(destinationColumn.items);
+				const destinationItems = [...destinationColumn.items];
 				// Going into the first position if no index is provided
 				const newIndexInDestination = itemIndexInFinishColumn ?? 0;
 				destinationItems.splice(newIndexInDestination, 0, shouldCopy ? itemCopy : item);
@@ -436,7 +445,7 @@ export default function BoardExample() {
 		}) => {
 			setData((data) => {
 				const destinationColumn = data.columnMap[finishColumnId];
-				const destinationItems = Array.from(destinationColumn.items);
+				const destinationItems = [...destinationColumn.items];
 				// Going into the first position if no index is provided
 				const newIndexInDestination = itemIndexInFinishColumn ?? 0;
 				console.log(newIndexInDestination);
@@ -531,7 +540,7 @@ export default function BoardExample() {
 					if (!location.current.dropTargets.length) {
 						return;
 					}
-					
+
 					preventUnhandled.stop();
 
 					const { finishColumnId, itemIndexInFinishColumn, trigger }: { finishColumnId: string, itemIndexInFinishColumn?: number, trigger: Trigger } = (() => {
@@ -752,14 +761,22 @@ export default function BoardExample() {
 		};
 	}, [getColumns, reorderColumn, reorderCard, registry, insertColumn, removeColumn, moveCard, insertCard, removeCard, instanceId]);
 
+	const eventScrollableRef = useRef<HTMLDivElement | null>(null);
+
 	return (
 		<BoardContext.Provider value={contextValue}>
 			<General {...data} />
 			<hr style={{ color: 'gray' }} />
 			<Board>
-				{data.orderedColumnIds.map((columnId) => {
+				{data.orderedColumnIds.filter(columnId => data.columnMap[columnId].type == 'image-column').map(columnId => {
 					return <Column column={data.columnMap[columnId]} key={columnId} />;
 				})}
+				<Box xcss={eventScrollContainerStyles} ref={eventScrollableRef}>
+					{data.orderedColumnIds.filter(columnId => data.columnMap[columnId].type == 'event-column').map(columnId => {
+						return <Column column={data.columnMap[columnId]} key={columnId} />;
+					})}
+				</Box>
+				<ColumnAdder />
 			</Board>
 		</BoardContext.Provider>
 	);
