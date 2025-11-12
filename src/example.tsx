@@ -16,6 +16,9 @@ import Board from './pieces/board';
 import { BoardContext, type BoardContextValue } from './pieces/board-context';
 import { Column } from './pieces/column';
 import { createRegistry } from './pieces/registry';
+import { Box, Stack } from '@atlaskit/primitives';
+import Heading from '@atlaskit/heading';
+import General from './pieces/general';
 
 export default function BoardExample() {
 	const [data, setData] = useState<BoardState>(getInitialBoardState);
@@ -415,6 +418,8 @@ export default function BoardExample() {
 
 	return (
 		<BoardContext.Provider value={contextValue}>
+			<General {...data} />
+			<hr style={{ color: 'gray' }} />
 			<Board>
 				{data.orderedColumnIds.map((columnId) => {
 					return <Column column={data.columnMap[columnId]} key={columnId} />;
