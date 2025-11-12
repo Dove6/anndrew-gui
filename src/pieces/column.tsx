@@ -42,7 +42,7 @@ import { useBoardContext } from './board-context';
 import { Card } from './card';
 import { ColumnContext, type ColumnContextProps, useColumnContext } from './column-context';
 
-const columnStyles = xcss({
+const frameColumnStyles = xcss({
 	width: '250px',
 	backgroundColor: 'elevation.surface.sunken',
 	borderRadius: 'radius.xlarge',
@@ -117,7 +117,7 @@ type State =
 const idle: State = { type: 'idle' };
 const isCardOver: State = { type: 'is-card-over' };
 
-const stateStyles: {
+const draggableStateStyles: {
 	[key in State['type']]: ReturnType<typeof xcss> | undefined;
 } = {
 	idle: xcss({
@@ -169,7 +169,7 @@ const isDraggingStyles = xcss({
 export const Column = memo(function Column({ column }: { column: ColumnData }) {
 	const columnId = column.columnId;
 	const isImageColumn = column.type === 'image-column';
-	const isDraggable = column.type !== 'image-column';
+	const isDraggable = !isImageColumn;
 	const columnRef = useRef<HTMLDivElement | null>(null);
 	const columnInnerRef = useRef<HTMLDivElement | null>(null);
 	const headerRef = useRef<HTMLDivElement | null>(null);
@@ -184,15 +184,74 @@ export const Column = memo(function Column({ column }: { column: ColumnData }) {
 		invariant(columnInnerRef.current);
 		invariant(headerRef.current);
 		invariant(scrollableRef.current);
-		const fnList = [];
-		fnList.push(registerColumn({
-			columnId,
-			entry: {
+		const fnList = [
+			registerColumn({
+				columnId,
+				entry: {
+					element: columnRef.current,
+				},
+			}),
+			dropTargetForElements({
+				element: columnInnerRef.current,
+				getData: () => ({ columnId }),
+				canDrop: ({ source }) => {
+					return source.data.instanceId === instanceId && source.data.type === 'card' && (source.data.subtype === 'image-card' || column.type === 'event-column');
+				},
+				getIsSticky: () => true,
+				onDragEnter: () => setState(isCardOver),
+				onDragLeave: () => setState(idle),
+				onDragStart: () => setState(isCardOver),
+				onDrop: () => setState(idle),
+			}),
+			dropTargetForElements({
 				element: columnRef.current,
-			},
-		}));
+				canDrop: ({ source }) => {
+					return source.data.instanceId === instanceId && source.data.type === 'column' && (source.data.subtype === 'image-column' || column.type === 'event-column');
+				},
+				getIsSticky: () => true,
+				getData: ({ input, element }) => {
+					const data = {
+						columnId,
+					};
+					return attachClosestEdge(data, {
+						input,
+						element,
+						allowedEdges: ['left', 'right'],
+					});
+				},
+				onDragEnter: (args) => {
+					setState({
+						type: 'is-column-over',
+						closestEdge: extractClosestEdge(args.self.data),
+					});
+				},
+				onDrag: (args) => {
+					// skip react re-render if edge is not changing
+					setState((current) => {
+						const closestEdge: Edge | null = extractClosestEdge(args.self.data);
+						if (current.type === 'is-column-over' && current.closestEdge === closestEdge) {
+							return current;
+						}
+						return {
+							type: 'is-column-over',
+							closestEdge,
+						};
+					});
+				},
+				onDragLeave: () => {
+					setState(idle);
+				},
+				onDrop: () => {
+					setState(idle);
+				},
+			}),
+			autoScrollForElements({
+				element: scrollableRef.current,
+				canScroll: ({ source }) =>
+					source.data.instanceId === instanceId && source.data.type === 'card',
+			})];
 		if (isDraggable) {
-			fnList.push(draggable({
+			fnList.splice(1, 0, draggable({
 				element: columnRef.current,
 				dragHandle: headerRef.current,
 				getInitialData: () => ({ columnId, type: 'column', subtype: column.type, instanceId }),
@@ -225,65 +284,6 @@ export const Column = memo(function Column({ column }: { column: ColumnData }) {
 				},
 			}));
 		}
-		fnList.push(dropTargetForElements({
-			element: columnInnerRef.current,
-			getData: () => ({ columnId }),
-			canDrop: ({ source }) => {
-				return source.data.instanceId === instanceId && source.data.type === 'card' && (source.data.subtype === 'image-card' || column.type === 'event-column');
-			},
-			getIsSticky: () => true,
-			onDragEnter: () => setState(isCardOver),
-			onDragLeave: () => setState(idle),
-			onDragStart: () => setState(isCardOver),
-			onDrop: () => setState(idle),
-		}));
-		fnList.push(dropTargetForElements({
-			element: columnRef.current,
-			canDrop: ({ source }) => {
-				return source.data.instanceId === instanceId && source.data.type === 'column' && (source.data.subtype === 'image-column' || column.type === 'event-column');
-			},
-			getIsSticky: () => true,
-			getData: ({ input, element }) => {
-				const data = {
-					columnId,
-				};
-				return attachClosestEdge(data, {
-					input,
-					element,
-					allowedEdges: ['left', 'right'],
-				});
-			},
-			onDragEnter: (args) => {
-				setState({
-					type: 'is-column-over',
-					closestEdge: extractClosestEdge(args.self.data),
-				});
-			},
-			onDrag: (args) => {
-				// skip react re-render if edge is not changing
-				setState((current) => {
-					const closestEdge: Edge | null = extractClosestEdge(args.self.data);
-					if (current.type === 'is-column-over' && current.closestEdge === closestEdge) {
-						return current;
-					}
-					return {
-						type: 'is-column-over',
-						closestEdge,
-					};
-				});
-			},
-			onDragLeave: () => {
-				setState(idle);
-			},
-			onDrop: () => {
-				setState(idle);
-			},
-		}));
-		fnList.push(autoScrollForElements({
-			element: scrollableRef.current,
-			canScroll: ({ source }) =>
-				source.data.instanceId === instanceId && source.data.type === 'card',
-		}));
 		return combine(...fnList);
 	}, [columnId, registerColumn, instanceId, isDraggable]);
 
@@ -304,18 +304,22 @@ export const Column = memo(function Column({ column }: { column: ColumnData }) {
 		return { columnId, getCardIndex, getNumCards };
 	}, [columnId, getCardIndex, getNumCards]);
 
+	const columnStyles = isImageColumn ? imageColumnStyles : frameColumnStyles;
+	const stateStyles = isDraggable ? draggableStateStyles : nonDraggableStateStyles;
+	const title = isImageColumn ? 'Images' : `Event ${column.name}`;
+
 	return (
 		<ColumnContext.Provider value={contextValue}>
 			<Flex
 				testId={`column-${columnId}`}
 				ref={columnRef}
 				direction="column"
-				xcss={[isImageColumn ? imageColumnStyles : columnStyles, isDraggable ? stateStyles[state.type] : nonDraggableStateStyles[state.type]]}
+				xcss={[columnStyles, stateStyles[state.type]]}
 			>
 				{/* This element takes up the same visual space as the column.
-          We are using a separate element so we can have two drop targets
-          that take up the same visual space (one for cards, one for columns)
-        */}
+				We are using a separate element so we can have two drop targets
+				that take up the same visual space (one for cards, one for columns)
+				*/}
 				<Stack xcss={stackStyles} ref={columnInnerRef}>
 					<Stack xcss={[stackStyles, isDragging ? isDraggingStyles : undefined]}>
 						<Inline
@@ -326,9 +330,9 @@ export const Column = memo(function Column({ column }: { column: ColumnData }) {
 							alignBlock="center"
 						>
 							<Heading size="xxsmall" as="span" testId={`column-header-title-${columnId}`}>
-								{column.title}
+								{title}
 							</Heading>
-							<ActionMenu />
+							{!isImageColumn ? <ActionMenu /> : <></>}
 						</Inline>
 						<Box xcss={scrollContainerStyles} ref={scrollableRef}>
 							<Stack xcss={cardListStyles} space="space.100">
@@ -361,7 +365,7 @@ function SafariColumnPreview({ column }: { column: ColumnData }) {
 	return (
 		<Box xcss={[columnHeaderStyles, safariPreviewStyles]}>
 			<Heading size="xxsmall" as="span">
-				{column.title}
+				{column.columnId}
 			</Heading>
 		</Box>
 	);
@@ -399,7 +403,7 @@ function ActionMenuItems() {
 		});
 	}, [reorderColumn, startIndex]);
 
-	const isMoveLeftDisabled = startIndex === 0;
+	const isMoveLeftDisabled = startIndex === 0 || columns[startIndex - 1].type === 'image-column';
 	const isMoveRightDisabled = startIndex === columns.length - 1;
 
 	return (

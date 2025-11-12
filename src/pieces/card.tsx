@@ -1,8 +1,10 @@
 import {
+	type ForwardedRef,
 	forwardRef,
 	Fragment,
 	memo,
 	type Ref,
+	type RefAttributes,
 	useCallback,
 	useEffect,
 	useRef,
@@ -40,7 +42,7 @@ import { dropTargetForExternal } from '@atlaskit/pragmatic-drag-and-drop/externa
 import { Box, Grid, Stack, xcss } from '@atlaskit/primitives';
 import { token } from '@atlaskit/tokens';
 
-import { type ColumnData, type CardData } from '../models';
+import { type ColumnData, type CardData, type ImageCard, type FrameCard, type EventColumn } from '../models';
 
 import { useBoardContext } from './board-context';
 import { useColumnContext } from './column-context';
@@ -69,11 +71,11 @@ const baseStyles = xcss({
 const imageBaseStyles = xcss({
 	width: '100%',
 	padding: 'space.100',
-	backgroundColor: 'color.background.brand.subtlest',
+	backgroundColor: 'color.background.danger',
 	borderRadius: 'radius.large',
 	position: 'relative',
 	':hover': {
-		backgroundColor: 'color.background.brand.subtlest.hovered',
+		backgroundColor: 'color.background.danger.hovered',
 	},
 });
 
@@ -103,11 +105,27 @@ type CardPrimitiveProps = {
 	actionMenuTriggerRef?: Ref<HTMLButtonElement>;
 };
 
+type ImageCardPrimitiveProps = {
+	closestEdge: Edge | null;
+	item: ImageCard;
+	state: State;
+	cardDivRef: Ref<HTMLDivElement>;
+	actionMenuTriggerRef?: Ref<HTMLButtonElement>;
+};
+
+type FrameCardPrimitiveProps = {
+	closestEdge: Edge | null;
+	item: FrameCard;
+	state: State;
+	cardDivRef: Ref<HTMLDivElement>;
+	actionMenuTriggerRef?: Ref<HTMLButtonElement>;
+};
+
 function MoveToOtherColumnItem({
 	targetColumn,
 	startIndex,
 }: {
-	targetColumn: ColumnData;
+	targetColumn: EventColumn;
 	startIndex: number;
 }) {
 	const { moveCard } = useBoardContext();
@@ -121,7 +139,7 @@ function MoveToOtherColumnItem({
 		});
 	}, [columnId, moveCard, startIndex, targetColumn.columnId]);
 
-	return <DropdownItem onClick={onClick}>{targetColumn.title}</DropdownItem>;
+	return <DropdownItem onClick={onClick}>{`Event ${targetColumn.name}`}</DropdownItem>;
 }
 
 function LazyDropdownItems({ userId }: { userId: string }) {
@@ -150,7 +168,14 @@ function LazyDropdownItems({ userId }: { userId: string }) {
 	const isMoveUpDisabled = startIndex === 0;
 	const isMoveDownDisabled = startIndex === numCards - 1;
 
-	const moveColumnOptions = getColumns().filter((column) => column.columnId !== columnId);
+	const columns = getColumns();
+	const currentColumn = columns.find(column => column.columnId === columnId);
+	invariant(currentColumn);
+	const moveColumnOptions = columns
+		.filter(column => column.columnId !== columnId)
+		.filter(column => column.type !== 'image-column');
+
+	const moveColumnHeader = currentColumn.type === 'image-column' ? 'Copy to' : 'Move to';
 
 	return (
 		<Fragment>
@@ -169,7 +194,7 @@ function LazyDropdownItems({ userId }: { userId: string }) {
 				</DropdownItem>
 			</DropdownItemGroup>
 			{moveColumnOptions.length ? (
-				<DropdownItemGroup title="Move to">
+				<DropdownItemGroup title={moveColumnHeader}>
 					{moveColumnOptions.map((column) => (
 						<MoveToOtherColumnItem
 							key={column.columnId}
@@ -183,24 +208,31 @@ function LazyDropdownItems({ userId }: { userId: string }) {
 	);
 }
 
-const CardPrimitive = forwardRef<HTMLDivElement, CardPrimitiveProps>(function CardPrimitive(
-	{ closestEdge, item, state, actionMenuTriggerRef },
-	ref,
-) {
-	const { avatarUrl, name, role, userId } = item;
-	const isImageCard = item.type === 'image-card';
+const CardPrimitive = forwardRef<HTMLDivElement, CardPrimitiveProps>(function CardPrimitive({ closestEdge, item, state, actionMenuTriggerRef }, ref) {
+	switch (item.type) {
+		case 'image-card':
+			return <ImageCardPrimitive closestEdge={closestEdge} item={item} state={state} actionMenuTriggerRef={actionMenuTriggerRef} cardDivRef={ref} />;
+		default:
+			return <FrameCardPrimitive closestEdge={closestEdge} item={item} state={state} actionMenuTriggerRef={actionMenuTriggerRef} cardDivRef={ref} />;
+	}
+});
+
+const ImageCardPrimitive = (
+	{ closestEdge, item, state, actionMenuTriggerRef, cardDivRef }: ImageCardPrimitiveProps,
+) => {
+	const { userId, name, contentUrl, offset } = item;
 
 	return (
 		<Grid
-			ref={ref}
+			ref={cardDivRef}
 			testId={`item-${userId}`}
 			templateColumns="auto 1fr auto"
 			columnGap="space.100"
 			alignItems="center"
-			xcss={[isImageCard ? imageBaseStyles : baseStyles, stateStyles[state.type]]}
+			xcss={[imageBaseStyles, stateStyles[state.type]]}
 		>
 			<Box as="span" xcss={noPointerEventsStyles}>
-				<Avatar size="large" src={avatarUrl} />
+				<Avatar size="large" src={contentUrl} />
 			</Box>
 
 			<Stack space="space.050" grow="fill">
@@ -208,7 +240,7 @@ const CardPrimitive = forwardRef<HTMLDivElement, CardPrimitiveProps>(function Ca
 					{name}
 				</Heading>
 				<Box as="small" xcss={noMarginStyles}>
-					{role}
+					{`Offset: ${offset.x} x ${offset.y} px`}
 				</Box>
 			</Stack>
 			<Box xcss={buttonColumnStyles}>
@@ -236,7 +268,68 @@ const CardPrimitive = forwardRef<HTMLDivElement, CardPrimitiveProps>(function Ca
 			{closestEdge && <DropIndicator edge={closestEdge} gap={token('space.100', '0')} />}
 		</Grid>
 	);
-});
+};
+
+const FrameCardPrimitive = (
+	{ closestEdge, item, state, actionMenuTriggerRef, cardDivRef }: FrameCardPrimitiveProps,
+) => {
+	const { userId, name, imageRef, offset, sfx, opacity } = item;
+
+	return (
+		<Grid
+			ref={cardDivRef}
+			testId={`item-${userId}`}
+			templateColumns="auto 1fr auto"
+			columnGap="space.100"
+			alignItems="center"
+			xcss={[baseStyles, stateStyles[state.type]]}
+		>
+			<Box as="span" xcss={noPointerEventsStyles}>
+				<Avatar size="large" src={imageRef.contentUrl} />
+			</Box>
+
+			<Stack space="space.050" grow="fill">
+				<Heading size="xsmall" as="span">
+					{name}
+				</Heading>
+				<Box as="small" xcss={noMarginStyles}>
+					{`Offset: ${offset.x} x ${offset.y} px`}
+				</Box>
+				<Box as="small" xcss={noMarginStyles}>
+					{`Opacity: ${Math.round(opacity / 255 * 1000) / 10}%`}
+				</Box>
+				{sfx?.length
+					? <Box as="small" xcss={noMarginStyles}>
+						{`SFX: ${sfx.join(', ')}`}
+					</Box>
+					: <></>}
+			</Stack>
+			<Box xcss={buttonColumnStyles}>
+				<DropdownMenu
+					trigger={({ triggerRef, ...triggerProps }) => (
+						<IconButton
+							ref={
+								actionMenuTriggerRef
+									? mergeRefs([triggerRef, actionMenuTriggerRef])
+									: // Workaround for IconButton typing issue
+										mergeRefs([triggerRef])
+							}
+							icon={(iconProps) => <MoreIcon {...iconProps} size="small" />}
+							label={`Move ${name}`}
+							appearance="default"
+							spacing="compact"
+							{...triggerProps}
+						/>
+					)}
+					shouldRenderToParent={fg('should-render-to-parent-should-be-true-design-syst')}
+				>
+					<LazyDropdownItems userId={userId} />
+				</DropdownMenu>
+			</Box>
+			{closestEdge && <DropIndicator edge={closestEdge} gap={token('space.100', '0')} />}
+		</Grid>
+	);
+};
 
 export const Card = memo(function Card({ item }: { item: CardData }) {
 	const ref = useRef<HTMLDivElement | null>(null);
