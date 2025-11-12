@@ -292,8 +292,8 @@ export const Column = memo(function Column({ column }: { column: ColumnData }) {
 		stableItems.current = column.items;
 	}, [column.items]);
 
-	const getCardIndex = useCallback((userId: string) => {
-		return stableItems.current.findIndex((item) => item.userId === userId);
+	const getCardIndex = useCallback((cardId: string) => {
+		return stableItems.current.findIndex((item) => item.cardId === cardId);
 	}, []);
 
 	const getNumCards = useCallback(() => {
@@ -337,7 +337,7 @@ export const Column = memo(function Column({ column }: { column: ColumnData }) {
 						<Box xcss={scrollContainerStyles} ref={scrollableRef}>
 							<Stack xcss={cardListStyles} space="space.100">
 								{column.items.map((item) => (
-									<Card item={item} key={item.userId} />
+									<Card item={item} key={item.cardId} />
 								))}
 							</Stack>
 						</Box>

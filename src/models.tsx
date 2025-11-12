@@ -34,7 +34,7 @@ export type CardData = ImageCard | FrameCard;
 
 export type ImageCard = {
 	type: 'image-card';
-	userId: string;
+	cardId: string;
 
 	name: string,
 	contentUrl: string,
@@ -46,7 +46,7 @@ export type ImageCard = {
 
 export type FrameCard = {
 	type: 'frame-card';
-	userId: string;
+	cardId: string;
 
 	name: string,
 	imageRef: ImageCard,
@@ -99,18 +99,6 @@ export function getInitialBoardState(): BoardState {
 	columns.sort((a, b) => a.type !== b.type ? (a.type == 'event-column' ? 1 : -1) : 0);
 	const orderedColumnIds = columns.map(column => column.columnId);
 
-	console.log({
-		columnMap,
-		orderedColumnIds,
-
-		fps: 16,
-		opacity: 255,
-		author: 'You',
-		description: '',
-
-		lastOperation: null,
-	});
-
 	return {
 		columnMap,
 		orderedColumnIds,
@@ -131,7 +119,7 @@ export function getImage(): ImageCard {
 	const name = names[position % names.length];
 	return {
 		type: 'image-card',
-		userId: `id:${position}`,
+		cardId: `id:${position}`,
 		name,
 		offset: { x: 0, y: 0 },
 		contentUrl: avatarMap[name],
@@ -143,7 +131,7 @@ export function getFrame(image: ImageCard): FrameCard {
 	const role = roles[position % roles.length];
 	return {
 		type: 'frame-card',
-		userId: `id:${position}`,
+		cardId: `id:${position}`,
 		name: `${image.name} / ${role}`,
 		offset: { x: 0, y: 0 },
 		imageRef: image,

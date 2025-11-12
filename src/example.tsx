@@ -60,7 +60,7 @@ export default function BoardExample() {
 			const column = columnMap[columnId];
 			const item = column.items[finishIndex];
 
-			const entry = registry.getCard(item.userId);
+			const entry = registry.getCard(item.cardId);
 			triggerPostMoveFlash(entry.element);
 
 			if (trigger !== 'keyboard') {
@@ -88,7 +88,7 @@ export default function BoardExample() {
 					? itemIndexInFinishColumn + 1
 					: destinationColumn.items.length;
 
-			const entry = registry.getCard(item.userId);
+			const entry = registry.getCard(item.cardId);
 			triggerPostMoveFlash(entry.element);
 
 			if (trigger !== 'keyboard') {
@@ -228,7 +228,7 @@ export default function BoardExample() {
 				const destinationColumn = data.columnMap[finishColumnId];
 				const item: CardData = sourceColumn.items[itemIndexInStartColumn];
 				const shouldCopy = item.type === 'image-card';
-				const itemCopy: FrameCard = item.type === 'image-card' ? getFrame(item) : { ...item, userId: `id:${getNextCardId()}` };
+				const itemCopy: FrameCard = item.type === 'image-card' ? getFrame(item) : { ...item, cardId: `id:${getNextCardId()}` };
 
 				const destinationItems = Array.from(destinationColumn.items);
 				// Going into the first position if no index is provided
@@ -239,7 +239,7 @@ export default function BoardExample() {
 					...data.columnMap,
 					[startColumnId]: {
 						...sourceColumn,
-						items: sourceColumn.items.filter((i) => shouldCopy || i.userId !== item.userId),
+						items: sourceColumn.items.filter((i) => shouldCopy || i.cardId !== item.cardId),
 					},
 					[finishColumnId]: {
 						...destinationColumn,
@@ -308,15 +308,14 @@ export default function BoardExample() {
 					}
 					// Dragging a card
 					if (source.data.type === 'card') {
-						const itemId = source.data.itemId;
-						invariant(typeof itemId === 'string');
+						const cardId = source.data.cardId;
+						invariant(typeof cardId === 'string');
 						// TODO: these lines not needed if item has columnId on it
 						const [, startColumnRecord] = location.initial.dropTargets;
 						const sourceId = startColumnRecord.data.columnId;
 						invariant(typeof sourceId === 'string');
 						const sourceColumn = data.columnMap[sourceId];
-						console.log(sourceId, data.columnMap);
-						const itemIndex = sourceColumn.items.findIndex((item) => item.userId === itemId);
+						const itemIndex = sourceColumn.items.findIndex((item) => item.cardId === cardId);
 
 						if (location.current.dropTargets.length === 1) {
 							const [destinationColumnRecord] = location.current.dropTargets;
@@ -360,7 +359,7 @@ export default function BoardExample() {
 							const destinationColumn = data.columnMap[destinationColumnId];
 
 							const indexOfTarget = destinationColumn.items.findIndex(
-								(item) => item.userId === destinationCardRecord.data.itemId,
+								(item) => item.cardId === destinationCardRecord.data.cardId,
 							);
 							const closestEdgeOfTarget: Edge | null = extractClosestEdge(
 								destinationCardRecord.data,
