@@ -35,6 +35,7 @@ import {
 	draggable,
 	dropTargetForElements,
 } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
+import { containsFiles } from '@atlaskit/pragmatic-drag-and-drop/external/file';
 import { preserveOffsetOnSource } from '@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source';
 import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview';
 import { dropTargetForExternal } from '@atlaskit/pragmatic-drag-and-drop/external/adapter';
@@ -337,6 +338,12 @@ export const Card = memo(function Card({ item }: { item: CardData }) {
 	const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
 	const [state, setState] = useState<State>(idleState);
 
+	const { getColumns } = useBoardContext();
+	const { columnId } = useColumnContext();
+	const columns = getColumns();
+	const currentColumn = columns.find(column => column.columnId === columnId);
+	invariant(currentColumn);
+
 	const actionMenuTriggerRef = useRef<HTMLButtonElement>(null);
 	const { instanceId, registerCard } = useBoardContext();
 	useEffect(() => {
@@ -373,17 +380,31 @@ export const Card = memo(function Card({ item }: { item: CardData }) {
 						},
 					});
 				},
-
 				onDragStart: () => setState(draggingState),
 				onDrop: () => setState(idleState),
 			}),
 			dropTargetForExternal({
 				element: element,
+				canDrop: ({ source }) => currentColumn.type === 'image-column' && containsFiles({ source }),
+				getIsSticky: () => true,
+				getData: ({ input, element }) => {
+					const data = { type: 'card', cardId };
+
+					return attachClosestEdge(data, {
+						input,
+						element,
+						allowedEdges: ['top', 'bottom'],
+					});
+				},
+				onDragEnter: (args) => setClosestEdge(extractClosestEdge(args.self.data)),
+				onDrag: (args) => setClosestEdge(extractClosestEdge(args.self.data)),
+				onDragLeave: () => setClosestEdge(null),
+				onDrop: () => setClosestEdge(null),
 			}),
 			dropTargetForElements({
 				element: element,
 				canDrop: ({ source }) => {
-					return source.data.instanceId === instanceId && source.data.type === 'card' && (source.data.subtype === 'image-card' || item.type === 'frame-card');
+					return source.data.instanceId === instanceId && source.data.type === 'card' && (source.data.subtype === 'image-card' || currentColumn.type === 'event-column');
 				},
 				getIsSticky: () => true,
 				getData: ({ input, element }) => {
@@ -405,12 +426,8 @@ export const Card = memo(function Card({ item }: { item: CardData }) {
 						setClosestEdge(extractClosestEdge(args.self.data));
 					}
 				},
-				onDragLeave: () => {
-					setClosestEdge(null);
-				},
-				onDrop: () => {
-					setClosestEdge(null);
-				},
+				onDragLeave: () => setClosestEdge(null),
+				onDrop: () => setClosestEdge(null),
 			}),
 		);
 	}, [instanceId, item, cardId]);

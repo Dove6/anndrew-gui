@@ -30,8 +30,10 @@ import {
 	draggable,
 	dropTargetForElements,
 } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
+import { dropTargetForExternal } from '@atlaskit/pragmatic-drag-and-drop/external/adapter';
 import { centerUnderPointer } from '@atlaskit/pragmatic-drag-and-drop/element/center-under-pointer';
 import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview';
+import { containsFiles } from '@atlaskit/pragmatic-drag-and-drop/external/file';
 // eslint-disable-next-line @atlaskit/design-system/no-emotion-primitives -- to be migrated to @atlaskit/primitives/compiled – go/akcss
 import { Box, Flex, Inline, Stack, xcss } from '@atlaskit/primitives';
 import { token } from '@atlaskit/tokens';
@@ -199,6 +201,15 @@ export const Column = memo(function Column({ column }: { column: ColumnData }) {
 					element: columnRef.current,
 				},
 			}),
+			dropTargetForExternal({
+				element: columnInnerRef.current,
+				getData: () => ({ columnId }),
+				canDrop: ({ source }) => column.type === 'image-column' && containsFiles({ source }),
+				getIsSticky: () => true,
+				onDragEnter: () => setState(isCardOver),
+				onDragLeave: () => setState(idle),
+				onDrop: () => setState(idle),
+			}),
 			dropTargetForElements({
 				element: columnInnerRef.current,
 				getData: () => ({ columnId }),
@@ -246,12 +257,8 @@ export const Column = memo(function Column({ column }: { column: ColumnData }) {
 						};
 					});
 				},
-				onDragLeave: () => {
-					setState(idle);
-				},
-				onDrop: () => {
-					setState(idle);
-				},
+				onDragLeave: () => setState(idle),
+				onDrop: () => setState(idle),
 			}),
 			autoScrollForElements({
 				element: scrollableRef.current,

@@ -162,6 +162,11 @@ export type Outcome =
 		finishColumnId: string;
 		itemIndexInStartColumn: number;
 		itemIndexInFinishColumn: number;
+	}
+	| {
+		type: 'card-insert';
+		finishColumnId: string;
+		itemIndexInFinishColumn: number;
 	};
 
 export type Trigger = 'pointer' | 'keyboard';
