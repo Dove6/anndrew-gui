@@ -59,7 +59,7 @@ const frameColumnStyles = xcss({
 });
 
 const imageColumnStyles = xcss({
-	width: '250px',
+	width: '300px',
 	backgroundColor: 'color.background.discovery',
 	borderRadius: 'radius.xlarge',
 	// eslint-disable-next-line @atlaskit/ui-styling-standard/no-unsafe-values, @atlaskit/ui-styling-standard/no-imported-style-values
