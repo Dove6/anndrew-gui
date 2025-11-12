@@ -152,6 +152,16 @@ export type Outcome =
 		finishIndex: number;
 	}
 	| {
+		type: 'column-insert';
+		columnId: string;
+		finishIndex: number;
+	}
+	| {
+		type: 'column-remove';
+		columnId: string;
+		startIndex: number;
+	}
+	| {
 		type: 'card-reorder';
 		columnId: string;
 		startIndex: number;
@@ -167,6 +177,11 @@ export type Outcome =
 		type: 'card-insert';
 		finishColumnId: string;
 		itemIndexInFinishColumn: number;
+	}
+	| {
+		type: 'card-remove';
+		startColumnId: string;
+		itemIndexInStartColumn: number;
 	};
 
 export type Trigger = 'pointer' | 'keyboard';
