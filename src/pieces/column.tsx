@@ -100,6 +100,14 @@ const columnHeaderStyles = xcss({
 	userSelect: 'none',
 });
 
+const propertiesHeaderStyles = xcss({
+	paddingInlineStart: 'space.200',
+	paddingInlineEnd: 'space.200',
+	paddingBlockStart: 'space.100',
+	color: 'color.text.subtlest',
+	userSelect: 'none',
+});
+
 /**
  * Note: not making `'is-dragging'` a `State` as it is
  * a _parallel_ state to `'is-column-over'`.
@@ -322,18 +330,30 @@ export const Column = memo(function Column({ column }: { column: ColumnData }) {
 				*/}
 				<Stack xcss={stackStyles} ref={columnInnerRef}>
 					<Stack xcss={[stackStyles, isDragging ? isDraggingStyles : undefined]}>
-						<Inline
-							xcss={columnHeaderStyles}
-							ref={headerRef}
-							testId={`column-header-${columnId}`}
-							spread="space-between"
-							alignBlock="center"
-						>
-							<Heading size="xxsmall" as="span" testId={`column-header-title-${columnId}`}>
-								{title}
-							</Heading>
-							{!isImageColumn ? <ActionMenu /> : <></>}
-						</Inline>
+						<Stack ref={headerRef}>
+							<Inline
+								xcss={columnHeaderStyles}
+								testId={`column-header-${columnId}`}
+								spread="space-between"
+								alignBlock="center"
+							>
+								<Heading size="xxsmall" as="span" testId={`column-header-title-${columnId}`}>
+									{title}
+								</Heading>
+								{!isImageColumn ? <ActionMenu /> : <></>}
+							</Inline>
+							{isImageColumn
+								? <></>
+								: <Inline xcss={propertiesHeaderStyles}>
+									<Box paddingInlineEnd="space.100" as="small">
+										{`Opacity: ${column.opacity}`}
+									</Box>
+									<Box paddingInlineEnd="space.100" as="small">
+										{`Loop length: ${column.loopLength}`}
+									</Box>
+								</Inline>}
+						</Stack>
+						<hr style={{ width: '93%', color: 'lightgray' }} />
 						<Box xcss={scrollContainerStyles} ref={scrollableRef}>
 							<Stack xcss={cardListStyles} space="space.100">
 								{column.items.map((item) => (
