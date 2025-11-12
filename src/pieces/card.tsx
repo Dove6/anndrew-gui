@@ -142,12 +142,12 @@ function MoveToOtherColumnItem({
 	return <DropdownItem onClick={onClick}>{`Event ${targetColumn.name}`}</DropdownItem>;
 }
 
-function LazyDropdownItems({ userId }: { userId: string }) {
+function LazyDropdownItems({ cardId }: { cardId: string }) {
 	const { getColumns, reorderCard } = useBoardContext();
 	const { columnId, getCardIndex, getNumCards } = useColumnContext();
 
 	const numCards = getNumCards();
-	const startIndex = getCardIndex(userId);
+	const startIndex = getCardIndex(cardId);
 
 	const moveToTop = useCallback(() => {
 		reorderCard({ columnId, startIndex, finishIndex: 0 });
@@ -220,12 +220,12 @@ const CardPrimitive = forwardRef<HTMLDivElement, CardPrimitiveProps>(function Ca
 const ImageCardPrimitive = (
 	{ closestEdge, item, state, actionMenuTriggerRef, cardDivRef }: ImageCardPrimitiveProps,
 ) => {
-	const { userId, name, contentUrl, offset } = item;
+	const { cardId: cardId, name, contentUrl, offset } = item;
 
 	return (
 		<Grid
 			ref={cardDivRef}
-			testId={`item-${userId}`}
+			testId={`item-${cardId}`}
 			templateColumns="auto 1fr auto"
 			columnGap="space.100"
 			alignItems="center"
@@ -262,7 +262,7 @@ const ImageCardPrimitive = (
 					)}
 					shouldRenderToParent={fg('should-render-to-parent-should-be-true-design-syst')}
 				>
-					<LazyDropdownItems userId={userId} />
+					<LazyDropdownItems cardId={cardId} />
 				</DropdownMenu>
 			</Box>
 			{closestEdge && <DropIndicator edge={closestEdge} gap={token('space.100', '0')} />}
@@ -273,12 +273,12 @@ const ImageCardPrimitive = (
 const FrameCardPrimitive = (
 	{ closestEdge, item, state, actionMenuTriggerRef, cardDivRef }: FrameCardPrimitiveProps,
 ) => {
-	const { userId, name, imageRef, offset, sfx, opacity } = item;
+	const { cardId, name, imageRef, offset, sfx, opacity } = item;
 
 	return (
 		<Grid
 			ref={cardDivRef}
-			testId={`item-${userId}`}
+			testId={`item-${cardId}`}
 			templateColumns="auto 1fr auto"
 			columnGap="space.100"
 			alignItems="center"
@@ -323,7 +323,7 @@ const FrameCardPrimitive = (
 					)}
 					shouldRenderToParent={fg('should-render-to-parent-should-be-true-design-syst')}
 				>
-					<LazyDropdownItems userId={userId} />
+					<LazyDropdownItems cardId={cardId} />
 				</DropdownMenu>
 			</Box>
 			{closestEdge && <DropIndicator edge={closestEdge} gap={token('space.100', '0')} />}
@@ -333,7 +333,7 @@ const FrameCardPrimitive = (
 
 export const Card = memo(function Card({ item }: { item: CardData }) {
 	const ref = useRef<HTMLDivElement | null>(null);
-	const { userId } = item;
+	const { cardId } = item;
 	const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
 	const [state, setState] = useState<State>(idleState);
 
@@ -343,13 +343,13 @@ export const Card = memo(function Card({ item }: { item: CardData }) {
 		invariant(actionMenuTriggerRef.current);
 		invariant(ref.current);
 		return registerCard({
-			cardId: userId,
+			cardId,
 			entry: {
 				element: ref.current,
 				actionMenuTrigger: actionMenuTriggerRef.current,
 			},
 		});
-	}, [registerCard, userId]);
+	}, [registerCard, cardId]);
 
 	useEffect(() => {
 		const element = ref.current;
@@ -357,7 +357,7 @@ export const Card = memo(function Card({ item }: { item: CardData }) {
 		return combine(
 			draggable({
 				element: element,
-				getInitialData: () => ({ type: 'card', subtype: item.type, itemId: userId, instanceId }),
+				getInitialData: () => ({ type: 'card', subtype: item.type, cardId, instanceId }),
 				onGenerateDragPreview: ({ location, source, nativeSetDragImage }) => {
 					const rect = source.element.getBoundingClientRect();
 
@@ -387,7 +387,7 @@ export const Card = memo(function Card({ item }: { item: CardData }) {
 				},
 				getIsSticky: () => true,
 				getData: ({ input, element }) => {
-					const data = { type: 'card', itemId: userId };
+					const data = { type: 'card', cardId };
 
 					return attachClosestEdge(data, {
 						input,
@@ -396,12 +396,12 @@ export const Card = memo(function Card({ item }: { item: CardData }) {
 					});
 				},
 				onDragEnter: (args) => {
-					if (args.source.data.itemId !== userId) {
+					if (args.source.data.cardId !== cardId) {
 						setClosestEdge(extractClosestEdge(args.self.data));
 					}
 				},
 				onDrag: (args) => {
-					if (args.source.data.itemId !== userId) {
+					if (args.source.data.cardId !== cardId) {
 						setClosestEdge(extractClosestEdge(args.self.data));
 					}
 				},
@@ -413,7 +413,7 @@ export const Card = memo(function Card({ item }: { item: CardData }) {
 				},
 			}),
 		);
-	}, [instanceId, item, userId]);
+	}, [instanceId, item, cardId]);
 
 	return (
 		<Fragment>
