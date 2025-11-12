@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import invariant from 'tiny-invariant';
+import { bind, type UnbindFn } from 'bind-event-listener';
 
 import { triggerPostMoveFlash } from '@atlaskit/pragmatic-drag-and-drop-flourish/trigger-post-move-flash';
 import { extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
@@ -9,15 +10,16 @@ import { getReorderDestinationIndex } from '@atlaskit/pragmatic-drag-and-drop-hi
 import * as liveRegion from '@atlaskit/pragmatic-drag-and-drop-live-region';
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
+import { monitorForExternal } from '@atlaskit/pragmatic-drag-and-drop/external/adapter';
 import { reorder } from '@atlaskit/pragmatic-drag-and-drop/reorder';
+import { containsFiles, getFiles } from '@atlaskit/pragmatic-drag-and-drop/external/file';
+import { preventUnhandled } from '@atlaskit/pragmatic-drag-and-drop/prevent-unhandled';
 
 import { type ColumnMap, type ColumnData, getInitialBoardState, type CardData, type FrameCard, type BoardState, type Trigger, type Outcome, getFrame, getNextCardId } from './models';
 import Board from './pieces/board';
 import { BoardContext, type BoardContextValue } from './pieces/board-context';
 import { Column } from './pieces/column';
 import { createRegistry } from './pieces/registry';
-import { Box, Stack } from '@atlaskit/primitives';
-import Heading from '@atlaskit/heading';
 import General from './pieces/general';
 
 export default function BoardExample() {
@@ -220,7 +222,7 @@ export default function BoardExample() {
 			finishColumnId: string;
 			itemIndexInStartColumn: number;
 			itemIndexInFinishColumn?: number;
-			trigger?: 'pointer' | 'keyboard';
+			trigger?: Trigger,
 		}) => {
 			// invalid cross column movement
 			if (startColumnId === finishColumnId) {
@@ -270,10 +272,143 @@ export default function BoardExample() {
 		[],
 	);
 
+	const insertCard = useCallback(
+		({
+			item,
+			finishColumnId,
+			itemIndexInFinishColumn,
+			trigger = 'keyboard',
+		}: {
+			item: CardData;
+			finishColumnId: string;
+			itemIndexInFinishColumn?: number;
+			trigger?: Trigger,
+		}) => {
+			setData((data) => {
+				const destinationColumn = data.columnMap[finishColumnId];
+				const destinationItems = Array.from(destinationColumn.items);
+				// Going into the first position if no index is provided
+				const newIndexInDestination = itemIndexInFinishColumn ?? 0;
+				console.log(newIndexInDestination);
+				destinationItems.splice(newIndexInDestination, 0, item);
+
+				const updatedMap = {
+					...data.columnMap,
+					[finishColumnId]: {
+						...destinationColumn,
+						items: destinationItems,
+					},
+				};
+
+				const outcome: Outcome | null = {
+					type: 'card-insert',
+					finishColumnId,
+					itemIndexInFinishColumn: newIndexInDestination,
+				};
+
+				return {
+					...data,
+					columnMap: updatedMap,
+					lastOperation: {
+						outcome,
+						trigger,
+					},
+				};
+			});
+		},
+		[],
+	);
+
 	const [instanceId] = useState(() => Symbol('instance-id'));
 
 	useEffect(() => {
 		return combine(
+			monitorForExternal({
+				canMonitor: containsFiles,
+				onDragStart: () => {
+					preventUnhandled.start();
+				},
+				onDrop: (args) => {
+					const { location, source } = args;
+					// didn't drop on anything
+					if (!location.current.dropTargets.length) {
+						return;
+					}
+					
+					preventUnhandled.stop();
+
+					const { finishColumnId, itemIndexInFinishColumn, trigger }: { finishColumnId: string, itemIndexInFinishColumn?: number, trigger: Trigger } = (() => {
+						// dropping in a column (on its header)
+						if (location.current.dropTargets.length === 1) {
+							const [destinationColumnRecord] = location.current.dropTargets;
+							const destinationId = destinationColumnRecord.data.columnId;
+							invariant(typeof destinationId === 'string');
+							const destinationColumn = data.columnMap[destinationId];
+							invariant(destinationColumn);
+							return {
+								finishColumnId: destinationColumn.columnId,
+								trigger: 'pointer',
+							};
+						}
+
+						// dropping in a column (relative to a card)
+						const [destinationCardRecord, destinationColumnRecord] = location.current.dropTargets;
+						const destinationColumnId = destinationColumnRecord.data.columnId;
+						invariant(typeof destinationColumnId === 'string');
+						const destinationColumn = data.columnMap[destinationColumnId];
+						const indexOfTarget = destinationColumn.items.findIndex(
+							(item) => item.cardId === destinationCardRecord.data.cardId,
+						);
+						const closestEdgeOfTarget: Edge | null = extractClosestEdge(
+							destinationCardRecord.data,
+						);
+						const destinationIndex =
+							closestEdgeOfTarget === 'bottom' ? indexOfTarget + 1 : indexOfTarget;
+						return {
+							finishColumnId: destinationColumn.columnId,
+							itemIndexInFinishColumn: destinationIndex < 0 ? destinationColumn.items.length : destinationIndex,
+							trigger: 'pointer',
+						};
+					})();
+
+					const files = getFiles({ source });
+					files.forEach((file) => {
+						if (file == null) {
+							return;
+						}
+						if (!file.type.startsWith('image/')) {
+							return;
+						}
+
+						const cardId = `id:${getNextCardId()}`;
+						const reader = new FileReader();
+						reader.readAsDataURL(file);
+						const unbind: UnbindFn = bind(reader, {
+							type: 'load',
+							listener: (_) => {
+								const result = reader.result;
+								if (typeof result === 'string') {
+									insertCard({
+										item: {
+											type: 'image-card',
+											cardId,
+											name: file.name,
+											contentUrl: result,
+											offset: { x: 0, y: 0 },
+										},
+										finishColumnId,
+										itemIndexInFinishColumn,
+										trigger,
+									});
+								} else {
+									console.error('Invalid type of FileReader result');
+								}
+								unbind();
+							},
+						});
+					});
+				},
+			}),
 			monitorForElements({
 				canMonitor({ source }) {
 					return source.data.instanceId === instanceId;
@@ -402,7 +537,7 @@ export default function BoardExample() {
 				},
 			}),
 		);
-	}, [data, instanceId, moveCard, reorderCard, reorderColumn]);
+	}, [data, instanceId, moveCard, insertCard, reorderCard, reorderColumn]);
 
 	const contextValue: BoardContextValue = useMemo(() => {
 		return {
@@ -410,11 +545,12 @@ export default function BoardExample() {
 			reorderColumn,
 			reorderCard,
 			moveCard,
+			insertCard,
 			registerCard: registry.registerCard,
 			registerColumn: registry.registerColumn,
 			instanceId,
 		};
-	}, [getColumns, reorderColumn, reorderCard, registry, moveCard, instanceId]);
+	}, [getColumns, reorderColumn, reorderCard, registry, moveCard, insertCard, instanceId]);
 
 	return (
 		<BoardContext.Provider value={contextValue}>
