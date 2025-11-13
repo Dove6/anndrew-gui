@@ -1,7 +1,7 @@
 import { BinaryBuffer } from '../utils'
 import { decompress as CLZWDecompress } from '../compression/clzw'
 import { decompress as CRLEDecompress } from '../compression/crle'
-import { CompressionType } from '../compression'
+import { type CompressionType } from '../compression'
 
 export interface CompressedImageHeader {
     compressionType: number
@@ -157,10 +157,10 @@ export const loadImage = (data: ArrayBuffer): Image => {
     }
 
     const { colorDescriptor, alphaDescriptor } = createDescriptors(header, {
-        0: [CompressionType.NONE, CompressionType.NONE],
-        2: [CompressionType.CLZW, CompressionType.CLZW],
-        4: [CompressionType.NONE, CompressionType.NONE],
-        5: [CompressionType.JPEG, CompressionType.CLZW],
+        0: ['NONE', 'NONE'],
+        2: ['CLZW', 'CLZW'],
+        4: ['NONE', 'NONE'],
+        5: ['JPEG', 'CLZW'],
     })
     const imgBytes = loadImageWithoutHeader(buffer, colorDescriptor, alphaDescriptor)
     return {
@@ -214,11 +214,11 @@ export const loadImageWithoutHeader = (
 
 const decompressImageData = (buffer: BinaryBuffer, descriptor: CompressionDescriptor) => {
     switch (descriptor.compressionType) {
-        case CompressionType.NONE:
+        case 'NONE':
             return new Uint8Array(buffer.read(descriptor.compressedLen))
-        case CompressionType.CLZW:
+        case 'CLZW':
             return new Uint8Array(CLZWDecompress(buffer))
-        case CompressionType.CRLE:
+        case 'CRLE':
             return new Uint8Array(
                 CRLEDecompress(
                     new BinaryBuffer(new DataView(buffer.read(descriptor.compressedLen))),
@@ -226,7 +226,7 @@ const decompressImageData = (buffer: BinaryBuffer, descriptor: CompressionDescri
                     descriptor.pixelLen
                 )
             )
-        case CompressionType.CLZW_IN_CRLE:
+        case 'CLZW_IN_CRLE':
             return new Uint8Array(
                 CRLEDecompress(
                     new BinaryBuffer(new DataView(CLZWDecompress(buffer))),
@@ -234,7 +234,7 @@ const decompressImageData = (buffer: BinaryBuffer, descriptor: CompressionDescri
                     descriptor.pixelLen
                 )
             )
-        case CompressionType.JPEG:
+        case 'JPEG':
             throw new Error(`Unsupported compression type: ${descriptor.compressionType}`)
         default:
             throw new Error(`Unknown compression type: ${descriptor.compressionType}`)

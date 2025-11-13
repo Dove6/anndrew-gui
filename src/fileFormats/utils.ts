@@ -13,7 +13,7 @@ export class BinaryBuffer {
     /**
      * Gets the Float32 value at current offset
      */
-    getFloat32(advance = true, littleEndian = true): number {
+    getFloat32(littleEndian = true): number {
         const value = this.view.getFloat32(this.offset, littleEndian)
         this.offset += 4
         return value
@@ -22,7 +22,7 @@ export class BinaryBuffer {
     /**
      * Gets the Float64 value at current offset
      */
-    getFloat64(advance = true, littleEndian = true): number {
+    getFloat64(littleEndian = true): number {
         const value = this.view.getFloat64(this.offset, littleEndian)
         this.offset += 8
         return value
@@ -31,7 +31,7 @@ export class BinaryBuffer {
     /**
      * Gets the Int8 value at current offset
      */
-    getInt8(advance = true): number {
+    getInt8(): number {
         const value = this.view.getInt8(this.offset)
         this.offset += 1
         return value
