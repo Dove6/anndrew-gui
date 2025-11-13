@@ -2,13 +2,12 @@ import { StrictMode } from 'react';
 import ReactDOM from 'react-dom';
 import '@atlaskit/css-reset';
 import AppProvider from '@atlaskit/app-provider';
-
-import Example from './example';
+import { App } from './app';
 
 ReactDOM.render(
   <StrictMode>
     <AppProvider>
-      <Example />
+      <App />
     </AppProvider>
   </StrictMode>,
   document.getElementById('root')
