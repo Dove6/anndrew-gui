@@ -15,7 +15,7 @@ import { reorder } from '@atlaskit/pragmatic-drag-and-drop/reorder';
 import { containsFiles, getFiles } from '@atlaskit/pragmatic-drag-and-drop/external/file';
 import { preventUnhandled } from '@atlaskit/pragmatic-drag-and-drop/prevent-unhandled';
 
-import { type ColumnData, getInitialBoardState, type CardData, type FrameCard, type BoardState, type Trigger, type Outcome, getFrame, getNextCardId, type CardUpdate, type ColumnUpdate } from './models';
+import { type ColumnData, getInitialBoardState, type CardData, type FrameCard, type BoardState, type Trigger, type Outcome, getFrame, getNextCardId, type CardUpdate, type ColumnUpdate, type BoardUpdate } from './models';
 import Board from './pieces/board';
 import { BoardContext, type BoardContextValue } from './pieces/board-context';
 import { Column } from './pieces/column';
@@ -667,6 +667,21 @@ export default function BoardExample() {
 		[],
 	);
 
+	const updateBoard = useCallback(
+		({ boardUpdate }: { boardUpdate: BoardUpdate; }) => {
+			setData((data) => {
+				return {
+					...data,
+					fps: boardUpdate.fps === undefined ? data.fps : boardUpdate.fps,
+					opacity: boardUpdate.opacity === undefined ? data.opacity : boardUpdate.opacity,
+					author: boardUpdate.author === undefined ? data.author : boardUpdate.author,
+					description: boardUpdate.description === undefined ? data.description : boardUpdate.description,
+				};
+			});
+		},
+		[],
+	);
+
 	const [instanceId] = useState(() => Symbol('instance-id'));
 
 	useEffect(() => {
@@ -903,9 +918,10 @@ export default function BoardExample() {
 			flashColumn,
 			updateCard,
 			updateColumn,
+			updateBoard,
 			instanceId,
 		};
-	}, [getColumns, reorderColumn, reorderCard, registry, insertColumn, removeColumn, moveCard, insertCard, removeCard, flashCard, flashColumn, updateCard, updateColumn, instanceId]);
+	}, [getColumns, reorderColumn, reorderCard, registry, insertColumn, removeColumn, moveCard, insertCard, removeCard, flashCard, flashColumn, updateCard, updateColumn, updateBoard, instanceId]);
 
 	const eventScrollableRef = useRef<HTMLDivElement | null>(null);
 
