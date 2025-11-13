@@ -15,7 +15,7 @@ import { reorder } from '@atlaskit/pragmatic-drag-and-drop/reorder';
 import { containsFiles, getFiles } from '@atlaskit/pragmatic-drag-and-drop/external/file';
 import { preventUnhandled } from '@atlaskit/pragmatic-drag-and-drop/prevent-unhandled';
 
-import { type ColumnMap, type ColumnData, getInitialBoardState, type CardData, type FrameCard, type BoardState, type Trigger, type Outcome, getFrame, getNextCardId } from './models';
+import { type ColumnData, getInitialBoardState, type CardData, type FrameCard, type BoardState, type Trigger, type Outcome, getFrame, getNextCardId } from './models';
 import Board from './pieces/board';
 import { BoardContext, type BoardContextValue } from './pieces/board-context';
 import { Column } from './pieces/column';
@@ -787,12 +787,12 @@ export default function BoardExample() {
 			<General {...data} />
 			<hr style={{ color: 'gray' }} />
 			<Board>
-				{data.orderedColumnIds.filter(columnId => data.columnMap[columnId].type == 'image-column').map(columnId => {
-					return <Column column={data.columnMap[columnId]} key={columnId} />;
+				{data.orderedColumnIds.filter(columnId => data.columnMap[columnId].type == 'image-column').map((columnId, order) => {
+					return <Column column={data.columnMap[columnId]} order={order} key={columnId} />;
 				})}
 				<Box xcss={eventScrollContainerStyles} ref={eventScrollableRef}>
-					{data.orderedColumnIds.filter(columnId => data.columnMap[columnId].type == 'event-column').map(columnId => {
-						return <Column column={data.columnMap[columnId]} key={columnId} />;
+					{data.orderedColumnIds.filter(columnId => data.columnMap[columnId].type == 'event-column').map((columnId, order) => {
+						return <Column column={data.columnMap[columnId]} order={order} key={columnId} />;
 					})}
 				</Box>
 				<ColumnAdder />

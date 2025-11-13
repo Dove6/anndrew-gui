@@ -1,10 +1,7 @@
 import {
-	type ForwardedRef,
 	forwardRef,
 	Fragment,
-	memo,
 	type Ref,
-	type RefAttributes,
 	useCallback,
 	useEffect,
 	useRef,
@@ -14,9 +11,9 @@ import {
 import ReactDOM from 'react-dom';
 import invariant from 'tiny-invariant';
 
-import Avatar, { AvatarItem } from '@atlaskit/avatar';
+import Avatar from '@atlaskit/avatar';
 import LinkExternalIcon from '@atlaskit/icon/core/link-external';
-import Button, { IconButton } from '@atlaskit/button/new';
+import { IconButton } from '@atlaskit/button/new';
 import DropdownMenu, { DropdownItem, DropdownItemGroup } from '@atlaskit/dropdown-menu';
 // eslint-disable-next-line @atlaskit/design-system/no-banned-imports
 import mergeRefs from '@atlaskit/ds-lib/merge-refs';
@@ -44,7 +41,7 @@ import { dropTargetForExternal } from '@atlaskit/pragmatic-drag-and-drop/externa
 import { Box, Grid, Stack, xcss } from '@atlaskit/primitives';
 import { token } from '@atlaskit/tokens';
 
-import { type ColumnData, type CardData, type ImageCard, type FrameCard, type EventColumn } from '../models';
+import { type CardData, type ImageCard, type FrameCard, type EventColumn } from '../models';
 
 import { useBoardContext } from './board-context';
 import { useColumnContext } from './column-context';
@@ -103,6 +100,7 @@ const buttonColumnStyles = xcss({
 type CardPrimitiveProps = {
 	closestEdge: Edge | null;
 	item: CardData;
+	order: number;
 	state: State;
 	actionMenuTriggerRef?: Ref<HTMLButtonElement>;
 };
@@ -110,6 +108,7 @@ type CardPrimitiveProps = {
 type ImageCardPrimitiveProps = {
 	closestEdge: Edge | null;
 	item: ImageCard;
+	order: number;
 	state: State;
 	cardDivRef: Ref<HTMLDivElement>;
 	actionMenuTriggerRef?: Ref<HTMLButtonElement>;
@@ -118,6 +117,7 @@ type ImageCardPrimitiveProps = {
 type FrameCardPrimitiveProps = {
 	closestEdge: Edge | null;
 	item: FrameCard;
+	order: number;
 	state: State;
 	cardDivRef: Ref<HTMLDivElement>;
 	actionMenuTriggerRef?: Ref<HTMLButtonElement>;
@@ -219,21 +219,20 @@ function LazyDropdownItems({ cardId }: { cardId: string }) {
 	);
 }
 
-const CardPrimitive = forwardRef<HTMLDivElement, CardPrimitiveProps>(function CardPrimitive({ closestEdge, item, state, actionMenuTriggerRef }, ref) {
+const CardPrimitive = forwardRef<HTMLDivElement, CardPrimitiveProps>(function CardPrimitive({ closestEdge, item, order, state, actionMenuTriggerRef }, ref) {
 	switch (item.type) {
 		case 'image-card':
-			return <ImageCardPrimitive closestEdge={closestEdge} item={item} state={state} actionMenuTriggerRef={actionMenuTriggerRef} cardDivRef={ref} />;
+			return <ImageCardPrimitive closestEdge={closestEdge} item={item} order={order} state={state} actionMenuTriggerRef={actionMenuTriggerRef} cardDivRef={ref} />;
 		default:
-			return <FrameCardPrimitive closestEdge={closestEdge} item={item} state={state} actionMenuTriggerRef={actionMenuTriggerRef} cardDivRef={ref} />;
+			return <FrameCardPrimitive closestEdge={closestEdge} item={item} order={order} state={state} actionMenuTriggerRef={actionMenuTriggerRef} cardDivRef={ref} />;
 	}
 });
 
 const ImageCardPrimitive = (
-	{ closestEdge, item, state, actionMenuTriggerRef, cardDivRef }: ImageCardPrimitiveProps,
+	{ closestEdge, item, order, state, actionMenuTriggerRef, cardDivRef }: ImageCardPrimitiveProps,
 ) => {
 	const { cardId, name, contentUrl, offset } = item;
-	const { getCardIndex } = useColumnContext();
-	const title = `Image ${getCardIndex(cardId)}: ${name}`;
+	const title = `Image ${order}: ${name}`;
 	return (
 		<Grid
 			ref={cardDivRef}
@@ -282,12 +281,11 @@ const ImageCardPrimitive = (
 };
 
 const FrameCardPrimitive = (
-	{ closestEdge, item, state, actionMenuTriggerRef, cardDivRef }: FrameCardPrimitiveProps,
+	{ closestEdge, item, order, state, actionMenuTriggerRef, cardDivRef }: FrameCardPrimitiveProps,
 ) => {
 	const { cardId, name, imageRef, offset, sfx, opacity } = item;
-	const { getCardIndex } = useColumnContext();
 	const { getColumns, flashCard } = useBoardContext();
-	const title = `Frame ${getCardIndex(cardId)}: ${name}`;
+	const title = `Frame ${order}: ${name}`;
 	const imageRefColumn = getColumns().find(c => c.items.findIndex(i => i.cardId == imageRef.cardId) >= 0);
 	invariant(imageRefColumn);
 	const refImageTitle = `Image ${imageRefColumn.items.findIndex(i => i.cardId == imageRef.cardId)}: ${imageRef.name}`;
@@ -380,7 +378,7 @@ const FrameCardPrimitive = (
 	);
 };
 
-export const Card = memo(function Card({ item }: { item: CardData }) {
+export const Card = ({ item, order }: { item: CardData, order: number }) => {
 	const ref = useRef<HTMLDivElement | null>(null);
 	const { cardId } = item;
 	const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
@@ -485,6 +483,7 @@ export const Card = memo(function Card({ item }: { item: CardData }) {
 			<CardPrimitive
 				ref={ref}
 				item={item}
+				order={order}
 				state={state}
 				closestEdge={closestEdge}
 				actionMenuTriggerRef={actionMenuTriggerRef}
@@ -505,10 +504,10 @@ export const Card = memo(function Card({ item }: { item: CardData }) {
 							height: state.rect.height,
 						}}
 					>
-						<CardPrimitive item={item} state={state} closestEdge={null} />
+						<CardPrimitive item={item} order={order} state={state} closestEdge={null} />
 					</Box>,
 					state.container,
 				)}
 		</Fragment>
 	);
-});
+};

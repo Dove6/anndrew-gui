@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { createPortal } from 'react-dom';
 import invariant from 'tiny-invariant';
@@ -180,7 +180,7 @@ const isDraggingStyles = xcss({
 	opacity: 0.4,
 });
 
-export const Column = ({ column }: { column: ColumnData }) => {
+export const Column = ({ column, order }: { column: ColumnData, order: number }) => {
 	const columnId = column.columnId;
 	const isImageColumn = column.type === 'image-column';
 	const isDraggable = !isImageColumn;
@@ -191,7 +191,7 @@ export const Column = ({ column }: { column: ColumnData }) => {
 	const [state, setState] = useState<State>(idle);
 	const [isDragging, setIsDragging] = useState<boolean>(false);
 
-	const { instanceId, getColumns, registerColumn } = useBoardContext();
+	const { instanceId, registerColumn } = useBoardContext();
 
 	useEffect(() => {
 		invariant(columnRef.current);
@@ -325,7 +325,7 @@ export const Column = ({ column }: { column: ColumnData }) => {
 
 	const columnStyles = isImageColumn ? imageColumnStyles : frameColumnStyles;
 	const stateStyles = isDraggable ? draggableStateStyles : nonDraggableStateStyles;
-	const title = isImageColumn ? 'Images' : `Event ${getColumns().filter(c => c.type === 'event-column').findIndex(c => c.columnId === columnId)}: ${column.name}`;
+	const title = isImageColumn ? 'Images' : `Event ${order}: ${column.name}`;
 
 	return (
 		<ColumnContext.Provider value={contextValue}>
@@ -367,8 +367,8 @@ export const Column = ({ column }: { column: ColumnData }) => {
 						<hr style={{ width: '93%', color: 'lightgray' }} />
 						<Box xcss={scrollContainerStyles} ref={scrollableRef}>
 							<Stack xcss={cardListStyles} space="space.100">
-								{column.items.map((item) => (
-									<Card item={item} key={item.cardId} />
+								{column.items.map((item, order) => (
+									<Card item={item} order={order} key={item.cardId} />
 								))}
 							</Stack>
 						</Box>
