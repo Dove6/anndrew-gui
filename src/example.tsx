@@ -72,8 +72,6 @@ export default function BoardExample() {
 			const { finishIndex } = outcome;
 
 			const { columnMap, orderedColumnIds } = stableData.current;
-			console.log(orderedColumnIds);
-			console.log(columnMap);
 			const sourceColumn = columnMap[orderedColumnIds[finishIndex]];
 
 			const entry = registry.getColumn(sourceColumn.columnId);
@@ -592,16 +590,34 @@ export default function BoardExample() {
 					}
 				}
 				updatedItems[cardIndex] = updatedCard;
+				const updatedMap = {
+					...data.columnMap,
+					[columnId]: {
+						...columnToUpdate,
+						items: updatedItems,
+					},
+				};
+				if (updatedCard.type === 'image-card') {
+					for (const columnId of Object.keys(updatedMap)) {
+						if (updatedMap[columnId].items.every(i => i.type !== 'frame-card' || i.imageRef.cardId !== cardId)) {
+							continue;
+						}
+						updatedMap[columnId] = { ...updatedMap[columnId], items: [...updatedMap[columnId].items] };
+						for (let itemIndex = 0; itemIndex < updatedMap[columnId].items.length; itemIndex++) {
+							const item = updatedMap[columnId].items[itemIndex];
+							if (item.type === 'frame-card' && item.imageRef.cardId === cardId) {
+								updatedMap[columnId].items[itemIndex] = {
+									...item,
+									imageRef: updatedCard,
+								};
+							}
+						}
+					}
+				}
 
 				return {
 					...data,
-					columnMap: {
-						...data.columnMap,
-						[columnId]: {
-							...columnToUpdate,
-							items: updatedItems,
-						},
-					},
+					columnMap: updatedMap,
 				};
 			});
 		},

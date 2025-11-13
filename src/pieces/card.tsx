@@ -288,7 +288,6 @@ const ImageCardPrimitive = (
 							input.oncancel = () => {
 								input.oncancel = null;
 								input.onchange = null;
-								console.log('Cancelled.');
 							};
 							input.onchange = () => {
 								input.oncancel = null;
@@ -297,7 +296,6 @@ const ImageCardPrimitive = (
 									return;
 								}
 								const file = input.files[0];
-								console.log('File selected: ', file);
 								const reader = new FileReader();
 								reader.readAsDataURL(file);
 								const unbind: UnbindFn = bind(reader, {
