@@ -10,6 +10,13 @@ export type BoardState = {
 	lastOperation: Operation | null;
 };
 
+export type BoardUpdate = {
+	fps?: number,
+	opacity?: number,
+	author?: string,
+	description?: string,
+}
+
 export type ColumnMap = { [columnId: string]: ColumnData };
 
 export type ColumnData = ImageColumn | EventColumn;
