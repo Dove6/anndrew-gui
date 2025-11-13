@@ -297,6 +297,10 @@ const ImageCardPrimitive = (
 									return;
 								}
 								const file = input.files[0];
+								if (!file.type.startsWith('image/')) {
+									console.error('Not an image');
+									return;
+								}
 								const reader = new FileReader();
 								reader.readAsDataURL(file);
 								const unbind: UnbindFn = bind(reader, {

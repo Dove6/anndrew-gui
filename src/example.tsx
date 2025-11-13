@@ -33,7 +33,7 @@ const eventScrollContainerStyles = xcss({
 	height: '720px',
 });
 
-export default function BoardExample() {
+export default function BoardExample({ instanceId } : { instanceId: symbol }) {
 	const [data, setData] = useState<BoardState>(getInitialBoardState);
 
 	const stableData = useRef(data);
@@ -681,8 +681,6 @@ export default function BoardExample() {
 		},
 		[],
 	);
-
-	const [instanceId] = useState(() => Symbol('instance-id'));
 
 	useEffect(() => {
 		return combine(
