@@ -57,7 +57,6 @@ type State =
 const idleState: State = { type: 'idle' };
 const draggingState: State = { type: 'dragging' };
 
-const noMarginStyles = xcss({ margin: 'space.0' });
 const noPointerEventsStyles = xcss({ pointerEvents: 'none' });
 const relativePositionStyle = xcss({ position: 'relative' });
 const baseStyles = xcss({
