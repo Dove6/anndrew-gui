@@ -17,6 +17,7 @@ import { Box, xcss } from '@atlaskit/primitives';
 import { loadAnn } from './fileFormats/ann';
 import type { BoardState, ColumnData, FrameCard, ImageCard, ImageColumn } from './models';
 import { encode as encodePng } from 'fast-png';
+import { token } from '@atlaskit/tokens';
 
 const boardStyles = xcss({
     paddingBlockStart: 'space.250',
@@ -29,21 +30,12 @@ const boardStyles = xcss({
     height: '720px',
 });
 
-// type State =
-//     | { type: 'idle' }
-//     | { type: 'is-over' };
+type State =
+    | { type: 'idle' }
+    | { type: 'is-over' };
 
-// const idle: State = { type: 'idle' };
-// const isOver: State = { type: 'is-over' };
-
-// const stateStyles: {
-//     [key in State['type']]: ReturnType<typeof xcss> | undefined;
-// } = {
-//     idle: undefined,
-//     'is-over': xcss({
-//         backgroundColor: 'color.background.selected.hovered',
-//     }),
-// };
+const idleState: State = { type: 'idle' };
+const isOverState: State = { type: 'is-over' };
 
 async function bytesToBase64DataUrl(bytes: BlobPart, type = 'application/octet-stream') {
   return await new Promise((resolve, reject) => {
@@ -58,6 +50,7 @@ async function bytesToBase64DataUrl(bytes: BlobPart, type = 'application/octet-s
 export const App = () => {
     const [instanceId] = useState(() => Symbol('instance-id'));
 
+    const [state, setState] = useState<State>(idleState);
     const buttonRef = useRef<HTMLButtonElement | null>(null);
     const uploaderRef = useRef<HTMLInputElement | null>(null);
 
@@ -132,6 +125,9 @@ export const App = () => {
                 element: element,
                 canDrop: containsFiles,
                 getIsSticky: () => true,
+                onDragEnter: () => setState(isOverState),
+                onDragLeave: () => setState(idleState),
+                onDrop: () => setState(idleState),
             }),
             monitorForExternal({
                 onDragStart: () => {
@@ -181,7 +177,10 @@ export const App = () => {
         }
         element.style.height = '720px';
         element.style.width = '90%';
-    }, [buttonRef.current]);
+        element.style.backgroundColor = state === isOverState
+            ? token('color.background.selected.hovered')
+            : token('elevation.surface.sunken');
+    }, [buttonRef.current, state]);
 
     return (typeof (initialBoardState) !== 'undefined'
         ? <BoardExample instanceId={instanceId} initialData={initialBoardState}></BoardExample>
