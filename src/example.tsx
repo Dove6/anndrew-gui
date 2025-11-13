@@ -15,7 +15,7 @@ import { reorder } from '@atlaskit/pragmatic-drag-and-drop/reorder';
 import { containsFiles, getFiles } from '@atlaskit/pragmatic-drag-and-drop/external/file';
 import { preventUnhandled } from '@atlaskit/pragmatic-drag-and-drop/prevent-unhandled';
 
-import { type ColumnData, getInitialBoardState, type CardData, type FrameCard, type BoardState, type Trigger, type Outcome, getFrame, getNextCardId } from './models';
+import { type ColumnData, getInitialBoardState, type CardData, type FrameCard, type BoardState, type Trigger, type Outcome, getFrame, getNextCardId, type CardUpdate } from './models';
 import Board from './pieces/board';
 import { BoardContext, type BoardContextValue } from './pieces/board-context';
 import { Column } from './pieces/column';
@@ -542,6 +542,72 @@ export default function BoardExample() {
 		[],
 	);
 
+	const updateCard = useCallback(
+		({ columnId, cardId, cardUpdate }: { columnId: string; cardId: string; cardUpdate: CardUpdate; }) => {
+			setData((data) => {
+				const columnToUpdate = data.columnMap[columnId];
+				const cardIndex = columnToUpdate.items.findIndex(c => c.cardId === cardId);
+				if (cardIndex < 0) {
+					console.error('Card not found');
+					return data;
+				}
+				const cardToUpdate = columnToUpdate.items[cardIndex];
+				const updatedItems = [...columnToUpdate.items];
+				const updatedCard = { ...cardToUpdate };
+				if (cardUpdate.name !== undefined) {
+					updatedCard.name = cardUpdate.name;
+				}
+				if (cardUpdate.offsetX !== undefined) {
+					updatedCard.offset.x = cardUpdate.offsetX;
+				}
+				if (cardUpdate.offsetY !== undefined) {
+					updatedCard.offset.y = cardUpdate.offsetY;
+				}
+				switch (updatedCard.type) {
+					case 'image-card': {
+						if (cardUpdate.type !== 'image-card') {
+							console.error('Incompatible card update type');
+							return data;
+						}
+						if (cardUpdate.contentUrl !== undefined) {
+							updatedCard.contentUrl = cardUpdate.contentUrl;
+						}
+						break;
+					}
+					default: {
+						if (cardUpdate.type !== 'frame-card') {
+							console.error('Incompatible card update type');
+							return data;
+						}
+						if (cardUpdate.imageRef !== undefined) {
+							updatedCard.imageRef = cardUpdate.imageRef;
+						}
+						if (cardUpdate.opacity !== undefined) {
+							updatedCard.opacity = cardUpdate.opacity;
+						}
+						if (cardUpdate.sfx !== undefined) {
+							updatedCard.sfx = cardUpdate.sfx;
+						}
+						break;
+					}
+				}
+				updatedItems[cardIndex] = updatedCard;
+
+				return {
+					...data,
+					columnMap: {
+						...data.columnMap,
+						[columnId]: {
+							...columnToUpdate,
+							items: updatedItems,
+						},
+					},
+				};
+			});
+		},
+		[],
+	);
+
 	const [instanceId] = useState(() => Symbol('instance-id'));
 
 	useEffect(() => {
@@ -776,9 +842,10 @@ export default function BoardExample() {
 			registerColumn: registry.registerColumn,
 			flashCard,
 			flashColumn,
+			updateCard,
 			instanceId,
 		};
-	}, [getColumns, reorderColumn, reorderCard, registry, insertColumn, removeColumn, moveCard, insertCard, removeCard, flashCard, flashColumn, instanceId]);
+	}, [getColumns, reorderColumn, reorderCard, registry, insertColumn, removeColumn, moveCard, insertCard, removeCard, flashCard, flashColumn, updateCard, instanceId]);
 
 	const eventScrollableRef = useRef<HTMLDivElement | null>(null);
 

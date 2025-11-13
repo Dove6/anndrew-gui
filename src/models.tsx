@@ -36,26 +36,48 @@ export type ImageCard = {
 	type: 'image-card';
 	cardId: string;
 
-	name: string,
-	contentUrl: string,
+	name: string;
+	contentUrl: string;
 	offset: {
-		x: number,
-		y: number,
-	},
+		x: number;
+		y: number;
+	};
 };
 
 export type FrameCard = {
 	type: 'frame-card';
 	cardId: string;
 
-	name: string,
-	imageRef: ImageCard,
+	name: string;
+	imageRef: ImageCard;
 	offset: {
-		x: number,
-		y: number,
-	},
-	sfx: string[],
-	opacity: number,
+		x: number;
+		y: number;
+	};
+	sfx: string[];
+	opacity: number;
+};
+
+export type CardUpdate = ImageCardUpdate | FrameCardUpdate;
+
+export type ImageCardUpdate = {
+	type: 'image-card';
+
+	name?: string;
+	contentUrl?: string;
+	offsetX?: number;
+	offsetY?: number;
+};
+
+export type FrameCardUpdate = {
+	type: 'frame-card';
+
+	name?: string;
+	imageRef?: ImageCard;
+	offsetX?: number;
+	offsetY?: number;
+	sfx?: string[];
+	opacity?: number;
 };
 
 export function getInitialBoardState(): BoardState {
@@ -121,7 +143,7 @@ export function getImage(): ImageCard {
 		type: 'image-card',
 		cardId: `id:${position}`,
 		name,
-		offset: { x: 0, y: 0 },
+		offset: { x: Math.trunc(Math.random() * 100) - 50, y: Math.trunc(Math.random() * 100) - 50 },
 		contentUrl: avatarMap[name],
 	};
 }
@@ -133,7 +155,7 @@ export function getFrame(image: ImageCard): FrameCard {
 		type: 'frame-card',
 		cardId: `id:${position}`,
 		name: `${image.name} / ${role}`,
-		offset: { x: 0, y: 0 },
+		offset: { x: Math.trunc(Math.random() * 100) - 50, y: Math.trunc(Math.random() * 100) - 50 },
 		imageRef: image,
 		opacity: 255,
 		sfx: [],
