@@ -15,7 +15,7 @@ import { reorder } from '@atlaskit/pragmatic-drag-and-drop/reorder';
 import { containsFiles, getFiles } from '@atlaskit/pragmatic-drag-and-drop/external/file';
 import { preventUnhandled } from '@atlaskit/pragmatic-drag-and-drop/prevent-unhandled';
 
-import { type ColumnData, getInitialBoardState, type CardData, type FrameCard, type BoardState, type Trigger, type Outcome, getFrame, getNextCardId, type CardUpdate } from './models';
+import { type ColumnData, getInitialBoardState, type CardData, type FrameCard, type BoardState, type Trigger, type Outcome, getFrame, getNextCardId, type CardUpdate, type ColumnUpdate } from './models';
 import Board from './pieces/board';
 import { BoardContext, type BoardContextValue } from './pieces/board-context';
 import { Column } from './pieces/column';
@@ -624,6 +624,49 @@ export default function BoardExample() {
 		[],
 	);
 
+	const updateColumn = useCallback(
+		({ columnId, columnUpdate }: { columnId: string; columnUpdate: ColumnUpdate; }) => {
+			setData((data) => {
+				const columnToUpdate = data.columnMap[columnId];
+				const updatedColumn = { ...columnToUpdate };
+				switch (updatedColumn.type) {
+					case 'image-column': {
+						if (columnUpdate.type !== 'image-column') {
+							console.error('Incompatible card update type');
+							return data;
+						}
+						break;
+					}
+					default: {
+						if (columnUpdate.type !== 'event-column') {
+							console.error('Incompatible card update type');
+							return data;
+						}
+						if (columnUpdate.name !== undefined) {
+							updatedColumn.name = columnUpdate.name;
+						}
+						if (columnUpdate.opacity !== undefined) {
+							updatedColumn.opacity = columnUpdate.opacity;
+						}
+						if (columnUpdate.loopLength !== undefined) {
+							updatedColumn.loopLength = columnUpdate.loopLength;
+						}
+						break;
+					}
+				}
+
+				return {
+					...data,
+					columnMap: {
+						...data.columnMap,
+						[columnId]: updatedColumn,
+					},
+				};
+			});
+		},
+		[],
+	);
+
 	const [instanceId] = useState(() => Symbol('instance-id'));
 
 	useEffect(() => {
@@ -859,9 +902,10 @@ export default function BoardExample() {
 			flashCard,
 			flashColumn,
 			updateCard,
+			updateColumn,
 			instanceId,
 		};
-	}, [getColumns, reorderColumn, reorderCard, registry, insertColumn, removeColumn, moveCard, insertCard, removeCard, flashCard, flashColumn, updateCard, instanceId]);
+	}, [getColumns, reorderColumn, reorderCard, registry, insertColumn, removeColumn, moveCard, insertCard, removeCard, flashCard, flashColumn, updateCard, updateColumn, instanceId]);
 
 	const eventScrollableRef = useRef<HTMLDivElement | null>(null);
 

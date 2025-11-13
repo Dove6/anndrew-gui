@@ -530,9 +530,9 @@ const FrameCardPrimitive = (
 								if (!ref) {
 									return;
 								}
-								ref.parentElement!.style.maxWidth = '3.5em';
-								ref.parentElement!.style.minWidth = '3.5em';
-								ref.parentElement!.style.width = '3.5em';
+								ref.parentElement!.style.maxWidth = '2.5em';
+								ref.parentElement!.style.minWidth = '2.5em';
+								ref.parentElement!.style.width = '2.5em';
 							}}
 						/>
 					</Inline>

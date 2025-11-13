@@ -30,6 +30,20 @@ export type EventColumn = {
 	opacity: number;
 }
 
+export type ColumnUpdate = ImageColumnUpdate | EventColumnUpdate;
+
+export type ImageColumnUpdate = {
+	type: 'image-column';
+}
+
+export type EventColumnUpdate = {
+	type: 'event-column';
+
+	name?: string;
+	loopLength?: number;
+	opacity?: number;
+}
+
 export type CardData = ImageCard | FrameCard;
 
 export type ImageCard = {
