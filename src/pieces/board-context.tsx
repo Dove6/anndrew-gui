@@ -55,6 +55,14 @@ export type BoardContextValue = {
 		};
 	}) => CleanupFn;
 
+	flashCard: (args: {
+		cardId: string;
+	}) => void;
+
+	flashColumn: (args: {
+		columnId: string;
+	}) => void;
+
 	instanceId: symbol;
 };
 

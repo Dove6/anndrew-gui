@@ -191,7 +191,7 @@ export const Column = ({ column }: { column: ColumnData }) => {
 	const [state, setState] = useState<State>(idle);
 	const [isDragging, setIsDragging] = useState<boolean>(false);
 
-	const { instanceId, registerColumn } = useBoardContext();
+	const { instanceId, getColumns, registerColumn } = useBoardContext();
 
 	useEffect(() => {
 		invariant(columnRef.current);
@@ -325,7 +325,7 @@ export const Column = ({ column }: { column: ColumnData }) => {
 
 	const columnStyles = isImageColumn ? imageColumnStyles : frameColumnStyles;
 	const stateStyles = isDraggable ? draggableStateStyles : nonDraggableStateStyles;
-	const title = isImageColumn ? 'Images' : `Event ${column.name}`;
+	const title = isImageColumn ? 'Images' : `Event ${getColumns().filter(c => c.type === 'event-column').findIndex(c => c.columnId === columnId)}: ${column.name}`;
 
 	return (
 		<ColumnContext.Provider value={contextValue}>
