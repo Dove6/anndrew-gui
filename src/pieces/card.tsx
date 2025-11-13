@@ -322,62 +322,62 @@ const ImageCardPrimitive = (
 				<Heading size="xsmall" as="span">
 					{title}
 				</Heading>
-			<Stack space="space.0" grow="fill">
-				<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
-					<span>Name:</span>
-					<Textfield
-						appearance="subtle"
-						placeholder="Image name"
-						value={name}
-						onChange={e => updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', name: e.currentTarget.value } })}
-						onBlur={e => e.currentTarget.setSelectionRange(0, 0)}
-						style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none' }}
-					/>
-				</Inline>
-				<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
-					<span>Offset:</span>
-					<Textfield
-						appearance="subtle"
-						defaultValue={offset.x}
-						onBlur={e => {
-							const validatedValue = Math.round(Number(e.currentTarget.value));
-							e.currentTarget.value = String(validatedValue);
-							updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', offsetX: validatedValue } });
-							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
-						}}
-						style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
-						ref={(ref: HTMLElement) => {
-							if (!ref) {
-								return;
-							}
-							ref.parentElement!.style.maxWidth = '3.5em';
-							ref.parentElement!.style.minWidth = '3.5em';
-							ref.parentElement!.style.width = '3.5em';
-						}}
-					/>
-					<span>x</span>
-					<Textfield
-						appearance="subtle"
-						defaultValue={offset.y}
-						onBlur={e => {
-							const validatedValue = Math.round(Number(e.currentTarget.value));
-							e.currentTarget.value = String(validatedValue);
-							updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', offsetY: validatedValue } });
-							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
-						}}
-						style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
-						ref={(ref: HTMLElement) => {
-							if (!ref) {
-								return;
-							}
-							ref.parentElement!.style.maxWidth = '3.5em';
-							ref.parentElement!.style.minWidth = '3.5em';
-							ref.parentElement!.style.width = '3.5em';
-						}}
-					/>
-					<span>px</span>
-				</Inline>
-			</Stack>
+				<Stack space="space.0" grow="fill">
+					<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
+						<span>Name:</span>
+						<Textfield
+							appearance="subtle"
+							placeholder="Image name"
+							value={name}
+							onChange={e => updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', name: e.currentTarget.value } })}
+							onBlur={e => e.currentTarget.setSelectionRange(0, 0)}
+							style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none' }}
+						/>
+					</Inline>
+					<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
+						<span>Offset:</span>
+						<Textfield
+							appearance="subtle"
+							defaultValue={offset.x}
+							onBlur={e => {
+								const validatedValue = Math.round(Number(e.currentTarget.value));
+								e.currentTarget.value = String(validatedValue);
+								updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', offsetX: validatedValue } });
+								e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
+							}}
+							style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+							ref={(ref: HTMLElement) => {
+								if (!ref) {
+									return;
+								}
+								ref.parentElement!.style.maxWidth = '3.5em';
+								ref.parentElement!.style.minWidth = '3.5em';
+								ref.parentElement!.style.width = '3.5em';
+							}}
+						/>
+						<span>x</span>
+						<Textfield
+							appearance="subtle"
+							defaultValue={offset.y}
+							onBlur={e => {
+								const validatedValue = Math.round(Number(e.currentTarget.value));
+								e.currentTarget.value = String(validatedValue);
+								updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', offsetY: validatedValue } });
+								e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
+							}}
+							style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+							ref={(ref: HTMLElement) => {
+								if (!ref) {
+									return;
+								}
+								ref.parentElement!.style.maxWidth = '3.5em';
+								ref.parentElement!.style.minWidth = '3.5em';
+								ref.parentElement!.style.width = '3.5em';
+							}}
+						/>
+						<span>px</span>
+					</Inline>
+				</Stack>
 			</Stack>
 			<Box xcss={buttonColumnStyles}>
 				<DropdownMenu
@@ -393,7 +393,7 @@ const ImageCardPrimitive = (
 							label={`Move ${name}`}
 							appearance="default"
 							spacing="compact"
-							
+
 							{...triggerProps}
 						/>
 					)}
@@ -411,7 +411,8 @@ const FrameCardPrimitive = (
 	{ closestEdge, item, order, state, actionMenuTriggerRef, cardDivRef }: FrameCardPrimitiveProps,
 ) => {
 	const { cardId, name, imageRef, offset, sfx, opacity } = item;
-	const { getColumns, flashCard } = useBoardContext();
+	const { getColumns, flashCard, updateCard } = useBoardContext();
+	const { columnId } = useColumnContext();
 	const title = `Frame ${order}: ${name}`;
 	const imageRefColumn = getColumns().find(c => c.items.findIndex(i => i.cardId == imageRef.cardId) >= 0);
 	invariant(imageRefColumn);
@@ -454,21 +455,103 @@ const FrameCardPrimitive = (
 				/>
 			</Stack>
 
-			<Stack space="space.050" grow="fill">
+			<Stack space="space.100" grow="fill">
 				<Heading size="xsmall" as="span">
 					{title}
 				</Heading>
-				<Box as="small" xcss={noMarginStyles}>
-					{`Offset: ${offset.x} x ${offset.y} px`}
-				</Box>
-				<Box as="small" xcss={noMarginStyles}>
-					{`Opacity: ${Math.round(opacity / 255 * 1000) / 10}%`}
-				</Box>
-				{sfx?.length
-					? <Box as="small" xcss={noMarginStyles}>
-						{`SFX: ${sfx.join(', ')}`}
-					</Box>
-					: <></>}
+				<Stack space="space.0" grow="fill">
+					<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
+						<span>Name:</span>
+						<Textfield
+							appearance="subtle"
+							placeholder="Image name"
+							value={name}
+							onChange={e => updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', name: e.currentTarget.value } })}
+							onBlur={e => e.currentTarget.setSelectionRange(0, 0)}
+							style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none' }}
+						/>
+					</Inline>
+					<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
+						<span>Offset:</span>
+						<Textfield
+							appearance="subtle"
+							defaultValue={offset.x}
+							onBlur={e => {
+								const validatedValue = Math.round(Number(e.currentTarget.value));
+								e.currentTarget.value = String(validatedValue);
+								updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', offsetX: validatedValue } });
+								e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
+							}}
+							style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+							ref={(ref: HTMLElement) => {
+								if (!ref) {
+									return;
+								}
+								ref.parentElement!.style.maxWidth = '3.5em';
+								ref.parentElement!.style.minWidth = '3.5em';
+								ref.parentElement!.style.width = '3.5em';
+							}}
+						/>
+						<span>x</span>
+						<Textfield
+							appearance="subtle"
+							defaultValue={offset.y}
+							onBlur={e => {
+								const validatedValue = Math.round(Number(e.currentTarget.value));
+								e.currentTarget.value = String(validatedValue);
+								updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', offsetY: validatedValue } });
+								e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
+							}}
+							style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+							ref={(ref: HTMLElement) => {
+								if (!ref) {
+									return;
+								}
+								ref.parentElement!.style.maxWidth = '3.5em';
+								ref.parentElement!.style.minWidth = '3.5em';
+								ref.parentElement!.style.width = '3.5em';
+							}}
+						/>
+						<span>px</span>
+					</Inline>
+					<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
+						<span>Opacity:</span>
+						<Textfield
+							appearance="subtle"
+							defaultValue={opacity}
+							onBlur={e => {
+								const validatedValue = Math.min(255, Math.max(Math.round(Number(e.currentTarget.value)), 0));
+								e.currentTarget.value = String(validatedValue);
+								updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', opacity: validatedValue } });
+								e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
+							}}
+							style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+							ref={(ref: HTMLElement) => {
+								if (!ref) {
+									return;
+								}
+								ref.parentElement!.style.maxWidth = '3.5em';
+								ref.parentElement!.style.minWidth = '3.5em';
+								ref.parentElement!.style.width = '3.5em';
+							}}
+						/>
+					</Inline>
+					<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
+						<span>SFX:</span>
+						<Textfield
+							appearance="subtle"
+							placeholder="Randomly played SFX list (comma-separated)"
+							defaultValue={sfx.join(', ')}
+							onBlur={e => {
+								const validatedValue = e.currentTarget.value.split(',').map(s => s.trim());
+								e.currentTarget.value = validatedValue.join(', ');
+								updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', sfx: validatedValue } });
+								e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
+							}}
+							style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none' }}
+						/>
+					</Inline>
+				</Stack>
 			</Stack>
 			<Box xcss={buttonColumnStyles}>
 				<DropdownMenu
