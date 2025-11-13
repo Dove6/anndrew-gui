@@ -98,13 +98,6 @@ const stateStyles: {
 	preview: undefined,
 };
 
-const buttonColumnStyles = xcss({
-	alignSelf: 'start',
-	position: 'absolute',
-	top: 'space.050',
-	right: 'space.050',
-});
-
 const swapImageButtonStyle = xcss({
 	pointerEvents: 'all',
 	position: 'absolute',

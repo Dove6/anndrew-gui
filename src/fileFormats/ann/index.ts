@@ -1,6 +1,5 @@
 import { BinaryBuffer, stringUntilNull } from '../utils'
 import { type CompressedImageHeader, createDescriptors, loadImageWithoutHeader } from '../img'
-import { CompressionType } from '../compression'
 
 const decoder = new TextDecoder()
 
@@ -159,10 +158,10 @@ export const loadAnn = (data: ArrayBuffer) => {
     for (let i = 0; i < header.framesCount; i++) {
         const img = annImages[i]
         const { colorDescriptor, alphaDescriptor } = createDescriptors(img, {
-            0: [CompressionType.NONE, CompressionType.NONE],
-            2: [CompressionType.CLZW, CompressionType.CLZW],
-            3: [CompressionType.CLZW_IN_CRLE, CompressionType.CLZW_IN_CRLE],
-            4: [CompressionType.CRLE, CompressionType.CRLE],
+            0: ['NONE', 'NONE'],
+            2: ['CLZW', 'CLZW'],
+            3: ['CLZW_IN_CRLE', 'CLZW_IN_CRLE'],
+            4: ['CRLE', 'CRLE'],
         })
         images.push(loadImageWithoutHeader(buffer, colorDescriptor, alphaDescriptor))
     }
