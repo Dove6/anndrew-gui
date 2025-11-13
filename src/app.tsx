@@ -1,12 +1,10 @@
 import {
-    Fragment,
     useCallback,
     useEffect,
     useRef,
     useState,
 } from 'react';
 
-import invariant from 'tiny-invariant';
 import UploadIcon from '@atlaskit/icon/core/upload';
 import { IconButton } from '@atlaskit/button/new';
 import { preventUnhandled } from '@atlaskit/pragmatic-drag-and-drop/prevent-unhandled';
@@ -16,7 +14,9 @@ import { dropTargetForExternal, monitorForExternal } from '@atlaskit/pragmatic-d
 import { bind, type UnbindFn } from 'bind-event-listener';
 import BoardExample from './example';
 import { Box, xcss } from '@atlaskit/primitives';
-import { loadAnn, type ANN } from './fileFormats/ann';
+import { loadAnn } from './fileFormats/ann';
+import type { BoardState, ColumnData, FrameCard, ImageCard, ImageColumn } from './models';
+import { encode as encodePng } from 'fast-png';
 
 const boardStyles = xcss({
     paddingBlockStart: 'space.250',
@@ -45,24 +45,89 @@ const boardStyles = xcss({
 //     }),
 // };
 
+async function bytesToBase64DataUrl(bytes: BlobPart, type = 'application/octet-stream') {
+  return await new Promise((resolve, reject) => {
+    const reader = Object.assign(new FileReader(), {
+      onload: () => resolve(reader.result),
+      onerror: () => reject(reader.error),
+    });
+    reader.readAsDataURL(new File([bytes], '', { type }));
+  });
+}
+
 export const App = () => {
     const [instanceId] = useState(() => Symbol('instance-id'));
 
     const buttonRef = useRef<HTMLButtonElement | null>(null);
     const uploaderRef = useRef<HTMLInputElement | null>(null);
 
-    const [sourceAnnData, setSourceAnnData] = useState<ANN>();
+    const [initialBoardState, setInitialBoardState] = useState<BoardState>();
 
-    const setSourceAnn = useCallback((buffer: ArrayBuffer) => {
+    const setSourceAnn = useCallback(async (buffer: ArrayBuffer) => {
         const ann = loadAnn(buffer);
-        setSourceAnnData(ann);
         console.log(ann);
-    }, [instanceId, setSourceAnnData]);
+
+        const contentUrls = await Promise.all(ann.images.map((imageBytes, imageIndex) => bytesToBase64DataUrl(encodePng({
+            width: ann.annImages[imageIndex].width,
+            height: ann.annImages[imageIndex].height,
+            data: imageBytes,
+        }) as BlobPart)));
+
+        const images = ann.annImages.map((image, imageIndex) => ({
+            type: 'image-card',
+            cardId: `card:${crypto.randomUUID()}`,
+            name: image.name ?? '',
+            offset: {
+                x: image.positionX,
+                y: image.positionY,
+            },
+            contentUrl: contentUrls[imageIndex],
+        } as ImageCard));
+
+        const imageColumn: ImageColumn = {
+            type: 'image-column',
+            columnId: `column:${crypto.randomUUID()}`,
+            items: images,
+        };
+
+        const events = ann.events.map(event => ({
+            type: 'event-column',
+            columnId: `column:${crypto.randomUUID()}`,
+            name: event.name ?? '',
+            opacity: event.transparency,
+            loopLength: event.loopAfterFrame,
+            items: event.frames.map((frame, frameIndex) => ({
+                type: 'frame-card',
+                cardId: `card:${crypto.randomUUID()}`,
+                name: frame.name ?? '',
+                offset: {
+                    x: frame.positionX,
+                    y: frame.positionY,
+                },
+                opacity: frame.transparency,
+                sfx: frame.sounds ?? [],
+                imageRef: images[event.framesImageMapping[frameIndex]],
+            } as FrameCard)),
+        } as ColumnData));
+
+        const columns = [ imageColumn, ...events ];
+
+        setInitialBoardState({
+            columnMap: Object.fromEntries(columns.map(column => [column.columnId, column])),
+            orderedColumnIds: columns.map(column => column.columnId),
+
+            author: ann.header.author,
+            description: ann.header.description,
+            fps: ann.header.fps,
+            opacity: ann.header.transparency,
+
+            lastOperation: null,
+        });
+    }, [instanceId, setInitialBoardState]);
 
     useEffect(() => {
         const element = buttonRef.current;
-        invariant(element);
-        return combine(
+        return element ? combine(
             dropTargetForExternal({
                 element: element,
                 canDrop: containsFiles,
@@ -106,7 +171,7 @@ export const App = () => {
                     });
                 },
             }),
-        );
+        ) : () => {};
     }, [instanceId, buttonRef.current]);
 
     useEffect(() => {
@@ -118,8 +183,8 @@ export const App = () => {
         element.style.width = '90%';
     }, [buttonRef.current]);
 
-    return (typeof (sourceAnnData) !== 'undefined'
-        ? <BoardExample instanceId={instanceId}></BoardExample>
+    return (typeof (initialBoardState) !== 'undefined'
+        ? <BoardExample instanceId={instanceId} initialData={initialBoardState}></BoardExample>
         : <Box xcss={boardStyles}>
             <IconButton
                 icon={UploadIcon}

@@ -15,7 +15,7 @@ import { reorder } from '@atlaskit/pragmatic-drag-and-drop/reorder';
 import { containsFiles, getFiles } from '@atlaskit/pragmatic-drag-and-drop/external/file';
 import { preventUnhandled } from '@atlaskit/pragmatic-drag-and-drop/prevent-unhandled';
 
-import { type ColumnData, getInitialBoardState, type CardData, type FrameCard, type BoardState, type Trigger, type Outcome, getFrame, getNextCardId, type CardUpdate, type ColumnUpdate, type BoardUpdate } from './models';
+import { type ColumnData, type CardData, type FrameCard, type BoardState, type Trigger, type Outcome, getFrame, getNextCardId, type CardUpdate, type ColumnUpdate, type BoardUpdate } from './models';
 import Board from './pieces/board';
 import { BoardContext, type BoardContextValue } from './pieces/board-context';
 import { Column } from './pieces/column';
@@ -33,8 +33,8 @@ const eventScrollContainerStyles = xcss({
 	height: '720px',
 });
 
-export default function BoardExample({ instanceId } : { instanceId: symbol }) {
-	const [data, setData] = useState<BoardState>(getInitialBoardState);
+export default function BoardExample({ instanceId, initialData }: { instanceId: symbol, initialData: BoardState }) {
+	const [data, setData] = useState<BoardState>(initialData);
 
 	const stableData = useRef(data);
 	useEffect(() => {

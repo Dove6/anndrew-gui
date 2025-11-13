@@ -33,6 +33,7 @@
     "@atlaskit/tokens": "7.1.1",
     "@emotion/react": "11.7.1",
     "bind-event-listener": "^3.0.0",
+    "fast-png": "^7.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "styled-components": "3.2.6",
