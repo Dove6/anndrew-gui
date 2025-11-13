@@ -448,7 +448,6 @@ export default function BoardExample() {
 				const destinationItems = [...destinationColumn.items];
 				// Going into the first position if no index is provided
 				const newIndexInDestination = itemIndexInFinishColumn ?? 0;
-				console.log(newIndexInDestination);
 				destinationItems.splice(newIndexInDestination, 0, item);
 
 				const updatedMap = {
@@ -521,6 +520,24 @@ export default function BoardExample() {
 					},
 				};
 			});
+		},
+		[],
+	);
+
+	const flashCard = useCallback(
+		({ cardId }: { cardId: string; }) => {
+			const entry = registry.getCard(cardId);
+			entry.element.scrollIntoView();
+			triggerPostMoveFlash(entry.element);
+		},
+		[],
+	);
+
+	const flashColumn = useCallback(
+		({ columnId }: { columnId: string; }) => {
+			const entry = registry.getColumn(columnId);
+			entry.element.scrollIntoView();
+			triggerPostMoveFlash(entry.element);
 		},
 		[],
 	);
@@ -757,9 +774,11 @@ export default function BoardExample() {
 			removeCard,
 			registerCard: registry.registerCard,
 			registerColumn: registry.registerColumn,
+			flashCard,
+			flashColumn,
 			instanceId,
 		};
-	}, [getColumns, reorderColumn, reorderCard, registry, insertColumn, removeColumn, moveCard, insertCard, removeCard, instanceId]);
+	}, [getColumns, reorderColumn, reorderCard, registry, insertColumn, removeColumn, moveCard, insertCard, removeCard, flashCard, flashColumn, instanceId]);
 
 	const eventScrollableRef = useRef<HTMLDivElement | null>(null);
 

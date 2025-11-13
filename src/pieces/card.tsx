@@ -14,8 +14,9 @@ import {
 import ReactDOM from 'react-dom';
 import invariant from 'tiny-invariant';
 
-import Avatar from '@atlaskit/avatar';
-import { IconButton } from '@atlaskit/button/new';
+import Avatar, { AvatarItem } from '@atlaskit/avatar';
+import LinkExternalIcon from '@atlaskit/icon/core/link-external';
+import Button, { IconButton } from '@atlaskit/button/new';
 import DropdownMenu, { DropdownItem, DropdownItemGroup } from '@atlaskit/dropdown-menu';
 // eslint-disable-next-line @atlaskit/design-system/no-banned-imports
 import mergeRefs from '@atlaskit/ds-lib/merge-refs';
@@ -129,7 +130,7 @@ function MoveToOtherColumnItem({
 	targetColumn: EventColumn;
 	startIndex: number;
 }) {
-	const { moveCard } = useBoardContext();
+	const { moveCard, getColumns } = useBoardContext();
 	const { columnId } = useColumnContext();
 
 	const onClick = useCallback(() => {
@@ -140,7 +141,9 @@ function MoveToOtherColumnItem({
 		});
 	}, [columnId, moveCard, startIndex, targetColumn.columnId]);
 
-	return <DropdownItem onClick={onClick}>{`Event ${targetColumn.name}`}</DropdownItem>;
+	return <DropdownItem onClick={onClick}>
+		{`Event ${getColumns().filter(c => c.type === 'event-column').findIndex(c => c.columnId === targetColumn.columnId)}: ${targetColumn.name}`}
+	</DropdownItem>;
 }
 
 function LazyDropdownItems({ cardId }: { cardId: string }) {
@@ -228,15 +231,15 @@ const CardPrimitive = forwardRef<HTMLDivElement, CardPrimitiveProps>(function Ca
 const ImageCardPrimitive = (
 	{ closestEdge, item, state, actionMenuTriggerRef, cardDivRef }: ImageCardPrimitiveProps,
 ) => {
-	const { cardId: cardId, name, contentUrl, offset } = item;
-
+	const { cardId, name, contentUrl, offset } = item;
+	const { getCardIndex } = useColumnContext();
+	const title = `Image ${getCardIndex(cardId)}: ${name}`;
 	return (
 		<Grid
 			ref={cardDivRef}
 			testId={`item-${cardId}`}
 			templateColumns="auto 1fr auto"
 			columnGap="space.100"
-			alignItems="center"
 			xcss={[imageBaseStyles, stateStyles[state.type]]}
 		>
 			<Box as="span" xcss={noPointerEventsStyles}>
@@ -245,7 +248,7 @@ const ImageCardPrimitive = (
 
 			<Stack space="space.050" grow="fill">
 				<Heading size="xsmall" as="span">
-					{name}
+					{title}
 				</Heading>
 				<Box as="small" xcss={noMarginStyles}>
 					{`Offset: ${offset.x} x ${offset.y} px`}
@@ -259,7 +262,7 @@ const ImageCardPrimitive = (
 								actionMenuTriggerRef
 									? mergeRefs([triggerRef, actionMenuTriggerRef])
 									: // Workaround for IconButton typing issue
-										mergeRefs([triggerRef])
+									mergeRefs([triggerRef])
 							}
 							icon={(iconProps) => <MoreIcon {...iconProps} size="small" />}
 							label={`Move ${name}`}
@@ -282,6 +285,20 @@ const FrameCardPrimitive = (
 	{ closestEdge, item, state, actionMenuTriggerRef, cardDivRef }: FrameCardPrimitiveProps,
 ) => {
 	const { cardId, name, imageRef, offset, sfx, opacity } = item;
+	const { getCardIndex } = useColumnContext();
+	const { getColumns, flashCard } = useBoardContext();
+	const title = `Frame ${getCardIndex(cardId)}: ${name}`;
+	const imageRefColumn = getColumns().find(c => c.items.findIndex(i => i.cardId == imageRef.cardId) >= 0);
+	invariant(imageRefColumn);
+	const refImageTitle = `Image ${imageRefColumn.items.findIndex(i => i.cardId == imageRef.cardId)}: ${imageRef.name}`;
+	const avatarRef = useRef<HTMLElement | null>(null);
+	useEffect(() => {
+		if (!avatarRef.current) {
+			return;
+		}
+		avatarRef.current.style.borderColor = 'black';
+		avatarRef.current.style.borderWidth = '1px';
+	}, [avatarRef]);
 
 	return (
 		<Grid
@@ -289,16 +306,40 @@ const FrameCardPrimitive = (
 			testId={`item-${cardId}`}
 			templateColumns="auto 1fr auto"
 			columnGap="space.100"
-			alignItems="center"
 			xcss={[baseStyles, stateStyles[state.type]]}
 		>
-			<Box as="span" xcss={noPointerEventsStyles}>
-				<Avatar size="large" appearance="square" src={imageRef.contentUrl} />
-			</Box>
+			<Stack space="space.050" grow="fill" alignInline="center">
+				<Box as="span" xcss={noPointerEventsStyles}>
+					<Avatar
+						size="large"
+						appearance="square"
+						borderColor="white"
+						src={imageRef.contentUrl}
+						ref={ref => {
+							if (!ref) {
+								return;
+							}
+							ref.style.borderColor = token('color.background.accent.gray.subtle');
+							ref.style.borderStyle = 'solid';
+							ref.style.borderWidth = '1px';
+						}}
+					/>
+				</Box>
+				<IconButton
+					icon={LinkExternalIcon}
+					label={<div style={{ textAlign: 'center' }}>
+						<span>Highlight reference image</span>
+						<br />
+						<span>{refImageTitle}</span>
+					</div>}
+					isTooltipDisabled={false}
+					onClick={() => flashCard({ cardId: imageRef.cardId })}
+				/>
+			</Stack>
 
 			<Stack space="space.050" grow="fill">
 				<Heading size="xsmall" as="span">
-					{name}
+					{title}
 				</Heading>
 				<Box as="small" xcss={noMarginStyles}>
 					{`Offset: ${offset.x} x ${offset.y} px`}
@@ -320,7 +361,7 @@ const FrameCardPrimitive = (
 								actionMenuTriggerRef
 									? mergeRefs([triggerRef, actionMenuTriggerRef])
 									: // Workaround for IconButton typing issue
-										mergeRefs([triggerRef])
+									mergeRefs([triggerRef])
 							}
 							icon={(iconProps) => <MoreIcon {...iconProps} size="small" />}
 							label={`Move ${name}`}
