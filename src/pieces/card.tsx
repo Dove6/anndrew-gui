@@ -62,6 +62,7 @@ const relativePositionStyle = xcss({ position: 'relative' });
 const baseStyles = xcss({
 	width: '100%',
 	padding: 'space.100',
+	paddingRight: 'space.0',
 	backgroundColor: 'elevation.surface',
 	borderRadius: 'radius.large',
 	position: 'relative',
@@ -73,6 +74,7 @@ const baseStyles = xcss({
 const imageBaseStyles = xcss({
 	width: '100%',
 	padding: 'space.100',
+	paddingRight: 'space.0',
 	backgroundColor: 'color.background.danger',
 	borderRadius: 'radius.large',
 	position: 'relative',
@@ -317,90 +319,94 @@ const ImageCardPrimitive = (
 				</Box>
 			</Box>
 
-			<Stack space="space.100" grow="fill">
-				<Heading size="xsmall" as="span">
-					{title}
-				</Heading>
-				<Stack space="space.0" grow="fill">
-					<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
-						<span>Name:</span>
-						<Textfield
-							appearance="subtle"
-							placeholder="Image name"
-							value={name}
-							onChange={e => updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', name: e.currentTarget.value } })}
-							onBlur={e => e.currentTarget.setSelectionRange(0, 0)}
-							style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none' }}
-						/>
-					</Inline>
-					<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
-						<span>Offset:</span>
-						<Textfield
-							appearance="subtle"
-							defaultValue={offset.x}
-							onBlur={e => {
-								const validatedValue = Math.round(Number(e.currentTarget.value));
-								e.currentTarget.value = String(validatedValue);
-								updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', offsetX: validatedValue } });
-								e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
-							}}
-							style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
-							ref={(ref: HTMLElement) => {
-								if (!ref) {
-									return;
+			<Stack space="space.0" grow="fill" xcss={xcss({ overflow: 'hidden' })}>
+				<Inline space="space.100" alignBlock="center" spread="space-between" xcss={xcss({ fontSize: 'small' })}>
+					<Heading size="xsmall" as="span" ref={(ref) => {
+						if (!ref) {
+							return;
+						}
+						ref.style.whiteSpace = 'nowrap';
+						ref.style.overflow = 'hidden';
+					}}>
+						{title}
+					</Heading>
+					<DropdownMenu
+						trigger={({ triggerRef, ...triggerProps }) => (
+							<IconButton
+								ref={
+									actionMenuTriggerRef
+										? mergeRefs([triggerRef, actionMenuTriggerRef])
+										: // Workaround for IconButton typing issue
+										mergeRefs([triggerRef])
 								}
-								ref.parentElement!.style.maxWidth = '3.5em';
-								ref.parentElement!.style.minWidth = '3.5em';
-								ref.parentElement!.style.width = '3.5em';
-							}}
-						/>
-						<span>x</span>
-						<Textfield
-							appearance="subtle"
-							defaultValue={offset.y}
-							onBlur={e => {
-								const validatedValue = Math.round(Number(e.currentTarget.value));
-								e.currentTarget.value = String(validatedValue);
-								updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', offsetY: validatedValue } });
-								e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
-							}}
-							style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
-							ref={(ref: HTMLElement) => {
-								if (!ref) {
-									return;
-								}
-								ref.parentElement!.style.maxWidth = '3.5em';
-								ref.parentElement!.style.minWidth = '3.5em';
-								ref.parentElement!.style.width = '3.5em';
-							}}
-						/>
-						<span>px</span>
-					</Inline>
-				</Stack>
-			</Stack>
-			<Box xcss={buttonColumnStyles}>
-				<DropdownMenu
-					trigger={({ triggerRef, ...triggerProps }) => (
-						<IconButton
-							ref={
-								actionMenuTriggerRef
-									? mergeRefs([triggerRef, actionMenuTriggerRef])
-									: // Workaround for IconButton typing issue
-									mergeRefs([triggerRef])
-							}
-							icon={(iconProps) => <MoreIcon {...iconProps} size="small" />}
-							label={`Move ${name}`}
-							appearance="default"
-							spacing="compact"
+								icon={(iconProps) => <MoreIcon {...iconProps} size="small" />}
+								label={`Move ${name}`}
+								appearance="default"
+								spacing="compact"
 
-							{...triggerProps}
-						/>
-					)}
-					shouldRenderToParent={fg('should-render-to-parent-should-be-true-design-syst')}
-				>
-					<LazyDropdownItems cardId={cardId} />
-				</DropdownMenu>
-			</Box>
+								{...triggerProps}
+							/>
+						)}
+						shouldRenderToParent={fg('should-render-to-parent-should-be-true-design-syst')}
+					>
+						<LazyDropdownItems cardId={cardId} />
+					</DropdownMenu>
+				</Inline>
+				<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
+					<span>Name:</span>
+					<Textfield
+						appearance="subtle"
+						placeholder="Image name"
+						value={name}
+						onChange={e => updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', name: e.currentTarget.value } })}
+						onBlur={e => e.currentTarget.setSelectionRange(0, 0)}
+						style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none' }}
+					/>
+				</Inline>
+				<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
+					<span>Offset:</span>
+					<Textfield
+						appearance="subtle"
+						defaultValue={offset.x}
+						onBlur={e => {
+							const validatedValue = Math.round(Number(e.currentTarget.value));
+							e.currentTarget.value = String(validatedValue);
+							updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', offsetX: validatedValue } });
+							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
+						}}
+						style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+						ref={(ref: HTMLElement) => {
+							if (!ref) {
+								return;
+							}
+							ref.parentElement!.style.maxWidth = '3.5em';
+							ref.parentElement!.style.minWidth = '2em';
+							ref.parentElement!.style.width = '3.5em';
+						}}
+					/>
+					<span>x</span>
+					<Textfield
+						appearance="subtle"
+						defaultValue={offset.y}
+						onBlur={e => {
+							const validatedValue = Math.round(Number(e.currentTarget.value));
+							e.currentTarget.value = String(validatedValue);
+							updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', offsetY: validatedValue } });
+							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
+						}}
+						style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+						ref={(ref: HTMLElement) => {
+							if (!ref) {
+								return;
+							}
+							ref.parentElement!.style.maxWidth = '3.5em';
+							ref.parentElement!.style.minWidth = '2em';
+							ref.parentElement!.style.width = '3.5em';
+						}}
+					/>
+					<span>px</span>
+				</Inline>
+			</Stack>
 			{closestEdge && <DropIndicator edge={closestEdge} gap={token('space.100', '0')} />}
 		</Grid>
 	);
@@ -425,7 +431,7 @@ const FrameCardPrimitive = (
 			columnGap="space.100"
 			xcss={[baseStyles, stateStyles[state.type]]}
 		>
-			<Stack space="space.050" grow="fill" alignInline="center">
+			<Stack space="space.050" grow="fill" alignInline="center" xcss={xcss({ overflow: 'hidden' })}>
 				<Box as="span" xcss={noPointerEventsStyles}>
 					<Avatar
 						size="large"
@@ -454,126 +460,130 @@ const FrameCardPrimitive = (
 				/>
 			</Stack>
 
-			<Stack space="space.100" grow="fill">
-				<Heading size="xsmall" as="span">
-					{title}
-				</Heading>
-				<Stack space="space.0" grow="fill">
-					<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
-						<span>Name:</span>
-						<Textfield
-							appearance="subtle"
-							placeholder="Image name"
-							value={name}
-							onChange={e => updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', name: e.currentTarget.value } })}
-							onBlur={e => e.currentTarget.setSelectionRange(0, 0)}
-							style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none' }}
-						/>
-					</Inline>
-					<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
-						<span>Offset:</span>
-						<Textfield
-							appearance="subtle"
-							defaultValue={offset.x}
-							onBlur={e => {
-								const validatedValue = Math.round(Number(e.currentTarget.value));
-								e.currentTarget.value = String(validatedValue);
-								updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', offsetX: validatedValue } });
-								e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
-							}}
-							style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
-							ref={(ref: HTMLElement) => {
-								if (!ref) {
-									return;
+			<Stack space="space.0" grow="fill" xcss={xcss({ overflow: 'hidden' })}>
+				<Inline space="space.100" alignBlock="center" spread="space-between" xcss={xcss({ fontSize: 'small' })}>
+					<Heading size="xsmall" as="span" ref={(ref) => {
+						if (!ref) {
+							return;
+						}
+						ref.style.whiteSpace = 'nowrap';
+						ref.style.overflow = 'hidden';
+					}}>
+						{title}
+					</Heading>
+					<DropdownMenu
+						trigger={({ triggerRef, ...triggerProps }) => (
+							<IconButton
+								ref={
+									actionMenuTriggerRef
+										? mergeRefs([triggerRef, actionMenuTriggerRef])
+										: // Workaround for IconButton typing issue
+										mergeRefs([triggerRef])
 								}
-								ref.parentElement!.style.maxWidth = '3.5em';
-								ref.parentElement!.style.minWidth = '3.5em';
-								ref.parentElement!.style.width = '3.5em';
-							}}
-						/>
-						<span>x</span>
-						<Textfield
-							appearance="subtle"
-							defaultValue={offset.y}
-							onBlur={e => {
-								const validatedValue = Math.round(Number(e.currentTarget.value));
-								e.currentTarget.value = String(validatedValue);
-								updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', offsetY: validatedValue } });
-								e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
-							}}
-							style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
-							ref={(ref: HTMLElement) => {
-								if (!ref) {
-									return;
-								}
-								ref.parentElement!.style.maxWidth = '3.5em';
-								ref.parentElement!.style.minWidth = '3.5em';
-								ref.parentElement!.style.width = '3.5em';
-							}}
-						/>
-						<span>px</span>
-					</Inline>
-					<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
-						<span>Opacity:</span>
-						<Textfield
-							appearance="subtle"
-							defaultValue={opacity}
-							onBlur={e => {
-								const validatedValue = Math.min(255, Math.max(Math.round(Number(e.currentTarget.value)), 0));
-								e.currentTarget.value = String(validatedValue);
-								updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', opacity: validatedValue } });
-								e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
-							}}
-							style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
-							ref={(ref: HTMLElement) => {
-								if (!ref) {
-									return;
-								}
-								ref.parentElement!.style.maxWidth = '2.5em';
-								ref.parentElement!.style.minWidth = '2.5em';
-								ref.parentElement!.style.width = '2.5em';
-							}}
-						/>
-					</Inline>
-					<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
-						<span>SFX:</span>
-						<Textfield
-							appearance="subtle"
-							placeholder="Randomly played SFX list (comma-separated)"
-							defaultValue={sfx.join(', ')}
-							onBlur={e => {
-								const validatedValue = e.currentTarget.value.split(',').map(s => s.trim());
-								e.currentTarget.value = validatedValue.join(', ');
-								updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', sfx: validatedValue } });
-								e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
-							}}
-							style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none' }}
-						/>
-					</Inline>
-				</Stack>
-			</Stack>
-			<Box xcss={buttonColumnStyles}>
-				<DropdownMenu
-					trigger={({ triggerRef, ...triggerProps }) => (
-						<IconButton
-							ref={
-								actionMenuTriggerRef
-									? mergeRefs([triggerRef, actionMenuTriggerRef])
-									: // Workaround for IconButton typing issue
-									mergeRefs([triggerRef])
+								icon={(iconProps) => <MoreIcon {...iconProps} size="small" />}
+								label={`Move ${name}`}
+								appearance="default"
+								spacing="compact"
+								{...triggerProps}
+							/>
+						)}
+						shouldRenderToParent={fg('should-render-to-parent-should-be-true-design-syst')}
+					>
+						<LazyDropdownItems cardId={cardId} />
+					</DropdownMenu>
+				</Inline>
+				<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
+					<span>Name:</span>
+					<Textfield
+						appearance="subtle"
+						placeholder="Image name"
+						value={name}
+						onChange={e => updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', name: e.currentTarget.value } })}
+						onBlur={e => e.currentTarget.setSelectionRange(0, 0)}
+						style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none' }}
+					/>
+				</Inline>
+				<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
+					<span>Offset:</span>
+					<Textfield
+						appearance="subtle"
+						defaultValue={offset.x}
+						onBlur={e => {
+							const validatedValue = Math.round(Number(e.currentTarget.value));
+							e.currentTarget.value = String(validatedValue);
+							updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', offsetX: validatedValue } });
+							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
+						}}
+						style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+						ref={(ref: HTMLElement) => {
+							if (!ref) {
+								return;
 							}
-							icon={(iconProps) => <MoreIcon {...iconProps} size="small" />}
-							label={`Move ${name}`}
-							appearance="default"
-							spacing="compact"
-							{...triggerProps}
-						/>
-					)}
-					shouldRenderToParent={fg('should-render-to-parent-should-be-true-design-syst')}
-				>
-					<LazyDropdownItems cardId={cardId} />
-				</DropdownMenu>
-			</Box>
+							ref.parentElement!.style.maxWidth = '3.5em';
+							ref.parentElement!.style.minWidth = '2em';
+							ref.parentElement!.style.width = '3.5em';
+						}}
+					/>
+					<span>x</span>
+					<Textfield
+						appearance="subtle"
+						defaultValue={offset.y}
+						onBlur={e => {
+							const validatedValue = Math.round(Number(e.currentTarget.value));
+							e.currentTarget.value = String(validatedValue);
+							updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', offsetY: validatedValue } });
+							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
+						}}
+						style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+						ref={(ref: HTMLElement) => {
+							if (!ref) {
+								return;
+							}
+							ref.parentElement!.style.maxWidth = '3.5em';
+							ref.parentElement!.style.minWidth = '2em';
+							ref.parentElement!.style.width = '3.5em';
+						}}
+					/>
+					<span>px</span>
+				</Inline>
+				<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
+					<span>Opacity:</span>
+					<Textfield
+						appearance="subtle"
+						defaultValue={opacity}
+						onBlur={e => {
+							const validatedValue = Math.min(255, Math.max(Math.round(Number(e.currentTarget.value)), 0));
+							e.currentTarget.value = String(validatedValue);
+							updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', opacity: validatedValue } });
+							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
+						}}
+						style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+						ref={(ref: HTMLElement) => {
+							if (!ref) {
+								return;
+							}
+							ref.parentElement!.style.maxWidth = '2.5em';
+							ref.parentElement!.style.minWidth = '2.5em';
+							ref.parentElement!.style.width = '2.5em';
+						}}
+					/>
+				</Inline>
+				<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
+					<span>SFX:</span>
+					<Textfield
+						appearance="subtle"
+						placeholder="Randomly played SFX list (comma-separated)"
+						defaultValue={sfx.join(', ')}
+						onBlur={e => {
+							const validatedValue = e.currentTarget.value.split(',').map(s => s.trim());
+							e.currentTarget.value = validatedValue.join(', ');
+							updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', sfx: validatedValue } });
+							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
+						}}
+						style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none' }}
+					/>
+				</Inline>
+			</Stack>
 			{closestEdge && <DropIndicator edge={closestEdge} gap={token('space.100', '0')} />}
 		</Grid>
 	);
