@@ -12,6 +12,8 @@ import ReactDOM from 'react-dom';
 import invariant from 'tiny-invariant';
 
 import Avatar from '@atlaskit/avatar';
+import Textfield from '@atlaskit/textfield';
+import UploadIcon from '@atlaskit/icon/core/upload';
 import LinkExternalIcon from '@atlaskit/icon/core/link-external';
 import { IconButton } from '@atlaskit/button/new';
 import DropdownMenu, { DropdownItem, DropdownItemGroup } from '@atlaskit/dropdown-menu';
@@ -38,13 +40,14 @@ import { preserveOffsetOnSource } from '@atlaskit/pragmatic-drag-and-drop/elemen
 import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview';
 import { dropTargetForExternal } from '@atlaskit/pragmatic-drag-and-drop/external/adapter';
 // eslint-disable-next-line @atlaskit/design-system/no-emotion-primitives -- to be migrated to @atlaskit/primitives/compiled – go/akcss
-import { Box, Grid, Stack, xcss } from '@atlaskit/primitives';
+import { Box, Grid, Inline, Stack, xcss } from '@atlaskit/primitives';
 import { token } from '@atlaskit/tokens';
 
 import { type CardData, type ImageCard, type FrameCard, type EventColumn } from '../models';
 
 import { useBoardContext } from './board-context';
 import { useColumnContext } from './column-context';
+import { bind, type UnbindFn } from 'bind-event-listener';
 
 type State =
 	| { type: 'idle' }
@@ -56,6 +59,7 @@ const draggingState: State = { type: 'dragging' };
 
 const noMarginStyles = xcss({ margin: 'space.0' });
 const noPointerEventsStyles = xcss({ pointerEvents: 'none' });
+const relativePositionStyle = xcss({ position: 'relative' });
 const baseStyles = xcss({
 	width: '100%',
 	padding: 'space.100',
@@ -95,6 +99,16 @@ const stateStyles: {
 
 const buttonColumnStyles = xcss({
 	alignSelf: 'start',
+	position: 'absolute',
+	top: 'space.050',
+	right: 'space.050',
+});
+
+const swapImageButtonStyle = xcss({
+	pointerEvents: 'all',
+	position: 'absolute',
+	top: 'space.050',
+	right: 'space.050',
 });
 
 type CardPrimitiveProps = {
@@ -233,6 +247,9 @@ const ImageCardPrimitive = (
 ) => {
 	const { cardId, name, contentUrl, offset } = item;
 	const title = `Image ${order}: ${name}`;
+	const { updateCard } = useBoardContext();
+	const { columnId } = useColumnContext();
+	const uploaderRef = useRef<HTMLInputElement | null>(null);
 	return (
 		<Grid
 			ref={cardDivRef}
@@ -241,17 +258,128 @@ const ImageCardPrimitive = (
 			columnGap="space.100"
 			xcss={[imageBaseStyles, stateStyles[state.type]]}
 		>
-			<Box as="span" xcss={noPointerEventsStyles}>
-				<Avatar size="xlarge" appearance="square" src={contentUrl} />
+			<Box as="span" xcss={[noPointerEventsStyles, relativePositionStyle]}>
+				<Avatar
+					size="xlarge"
+					appearance="square"
+					borderColor="white"
+					src={contentUrl}
+					ref={ref => {
+						if (!ref) {
+							return;
+						}
+						ref.style.borderColor = token('color.background.accent.gray.subtle');
+						ref.style.borderStyle = 'solid';
+						ref.style.borderWidth = '1px';
+					}}
+				/>
+				<Box xcss={swapImageButtonStyle}>
+					<IconButton
+						icon={(iconProps) => <UploadIcon {...iconProps} size="small" />}
+						label="Replace image from disk"
+						isTooltipDisabled={false}
+						appearance="primary"
+						spacing="compact"
+						onClick={_ => {
+							const input = uploaderRef.current;
+							if (!input) {
+								return;
+							}
+							input.oncancel = () => {
+								input.oncancel = null;
+								input.onchange = null;
+								console.log('Cancelled.');
+							};
+							input.onchange = () => {
+								input.oncancel = null;
+								input.onchange = null;
+								if (input.files?.length !== 1) {
+									return;
+								}
+								const file = input.files[0];
+								console.log('File selected: ', file);
+								const reader = new FileReader();
+								reader.readAsDataURL(file);
+								const unbind: UnbindFn = bind(reader, {
+									type: 'load',
+									listener: (_) => {
+										const result = reader.result;
+										if (typeof result === 'string') {
+											updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', contentUrl: result } });
+										} else {
+											console.error('Invalid type of FileReader result');
+										}
+										unbind();
+									},
+								});
+							};
+							input.click();
+						}}
+					/>
+					<input type="file" ref={uploaderRef} style={{ display: 'none' }} />
+				</Box>
 			</Box>
 
-			<Stack space="space.050" grow="fill">
+			<Stack space="space.100" grow="fill">
 				<Heading size="xsmall" as="span">
 					{title}
 				</Heading>
-				<Box as="small" xcss={noMarginStyles}>
-					{`Offset: ${offset.x} x ${offset.y} px`}
-				</Box>
+			<Stack space="space.0" grow="fill">
+				<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
+					<span>Name:</span>
+					<Textfield
+						appearance="subtle"
+						placeholder="Image name"
+						value={name}
+						onChange={e => updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', name: e.currentTarget.value } })}
+						onBlur={e => e.currentTarget.setSelectionRange(0, 0)}
+						style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none' }}
+					/>
+				</Inline>
+				<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
+					<span>Offset:</span>
+					<Textfield
+						appearance="subtle"
+						defaultValue={offset.x}
+						onBlur={e => {
+							const validatedValue = Math.round(Number(e.currentTarget.value));
+							e.currentTarget.value = String(validatedValue);
+							updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', offsetX: validatedValue } });
+							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
+						}}
+						style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+						ref={(ref: HTMLElement) => {
+							if (!ref) {
+								return;
+							}
+							ref.parentElement!.style.maxWidth = '3.5em';
+							ref.parentElement!.style.minWidth = '3.5em';
+							ref.parentElement!.style.width = '3.5em';
+						}}
+					/>
+					<span>x</span>
+					<Textfield
+						appearance="subtle"
+						defaultValue={offset.y}
+						onBlur={e => {
+							const validatedValue = Math.round(Number(e.currentTarget.value));
+							e.currentTarget.value = String(validatedValue);
+							updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', offsetY: validatedValue } });
+							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
+						}}
+						style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+						ref={(ref: HTMLElement) => {
+							if (!ref) {
+								return;
+							}
+							ref.parentElement!.style.maxWidth = '3.5em';
+							ref.parentElement!.style.minWidth = '3.5em';
+							ref.parentElement!.style.width = '3.5em';
+						}}
+					/>
+					<span>px</span>
+				</Inline>
+			</Stack>
 			</Stack>
 			<Box xcss={buttonColumnStyles}>
 				<DropdownMenu
@@ -267,6 +395,7 @@ const ImageCardPrimitive = (
 							label={`Move ${name}`}
 							appearance="default"
 							spacing="compact"
+							
 							{...triggerProps}
 						/>
 					)}
@@ -289,14 +418,6 @@ const FrameCardPrimitive = (
 	const imageRefColumn = getColumns().find(c => c.items.findIndex(i => i.cardId == imageRef.cardId) >= 0);
 	invariant(imageRefColumn);
 	const refImageTitle = `Image ${imageRefColumn.items.findIndex(i => i.cardId == imageRef.cardId)}: ${imageRef.name}`;
-	const avatarRef = useRef<HTMLElement | null>(null);
-	useEffect(() => {
-		if (!avatarRef.current) {
-			return;
-		}
-		avatarRef.current.style.borderColor = 'black';
-		avatarRef.current.style.borderWidth = '1px';
-	}, [avatarRef]);
 
 	return (
 		<Grid
