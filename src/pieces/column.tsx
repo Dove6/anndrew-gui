@@ -343,12 +343,19 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 					<Stack xcss={[stackStyles, isDragging ? isDraggingStyles : undefined]}>
 						<Stack ref={headerRef}>
 							<Inline
+								space="space.100"
 								xcss={columnHeaderStyles}
 								testId={`column-header-${columnId}`}
 								spread="space-between"
 								alignBlock="center"
 							>
-								<Heading size="xxsmall" as="span" testId={`column-header-title-${columnId}`}>
+								<Heading size="xxsmall" as="span" testId={`column-header-title-${columnId}`} ref={(ref) => {
+									if (!ref) {
+										return;
+									}
+									ref.style.whiteSpace = 'nowrap';
+									ref.style.overflow = 'hidden';
+								}}>
 									{title}
 								</Heading>
 								{!isImageColumn ? <ActionMenu /> : <></>}
