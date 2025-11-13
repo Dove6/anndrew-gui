@@ -43,6 +43,7 @@ import { type ColumnData } from '../models';
 import { useBoardContext } from './board-context';
 import { Card } from './card';
 import { ColumnContext, type ColumnContextProps, useColumnContext } from './column-context';
+import Textfield from '@atlaskit/textfield';
 
 const frameColumnStyles = xcss({
 	width: '250px',
@@ -109,7 +110,6 @@ const columnHeaderStyles = xcss({
 const propertiesHeaderStyles = xcss({
 	paddingInlineStart: 'space.200',
 	paddingInlineEnd: 'space.200',
-	paddingBlockStart: 'space.100',
 	color: 'color.text.subtlest',
 	userSelect: 'none',
 });
@@ -191,7 +191,7 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 	const [state, setState] = useState<State>(idle);
 	const [isDragging, setIsDragging] = useState<boolean>(false);
 
-	const { instanceId, registerColumn } = useBoardContext();
+	const { instanceId, registerColumn, updateColumn } = useBoardContext();
 
 	useEffect(() => {
 		invariant(columnRef.current);
@@ -355,14 +355,62 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 							</Inline>
 							{isImageColumn
 								? <></>
-								: <Inline xcss={propertiesHeaderStyles}>
-									<Box paddingInlineEnd="space.100" as="small">
-										{`Opacity: ${column.opacity}`}
-									</Box>
-									<Box paddingInlineEnd="space.100" as="small">
-										{`Loop length: ${column.loopLength}`}
-									</Box>
-								</Inline>}
+								: <Stack space="space.0" grow="fill" xcss={propertiesHeaderStyles}>
+									<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
+										<span>Name:</span>
+										<Textfield
+											appearance="subtle"
+											placeholder="Image name"
+											value={column.name}
+											onChange={e => updateColumn({ columnId, columnUpdate: { type: 'event-column', name: e.currentTarget.value } })}
+											onBlur={e => e.currentTarget.setSelectionRange(0, 0)}
+											style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none' }}
+										/>
+									</Inline>
+									<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
+										<span>Opacity:</span>
+										<Textfield
+											appearance="subtle"
+											defaultValue={column.opacity}
+											onBlur={e => {
+												const validatedValue = Math.min(255, Math.max(Math.round(Number(e.currentTarget.value)), 0));
+												e.currentTarget.value = String(validatedValue);
+												updateColumn({ columnId, columnUpdate: { type: 'event-column', opacity: validatedValue } });
+												e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
+											}}
+											style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+											ref={(ref: HTMLElement) => {
+												if (!ref) {
+													return;
+												}
+												ref.parentElement!.style.maxWidth = '2.5em';
+												ref.parentElement!.style.minWidth = '2.5em';
+												ref.parentElement!.style.width = '2.5em';
+											}}
+										/>
+										<span style={{ marginRight: '5px' }}></span>
+										<span>Loop length:</span>
+										<Textfield
+											appearance="subtle"
+											defaultValue={column.loopLength}
+											onBlur={e => {
+												const validatedValue = Math.min(column.items.length, Math.max(Math.round(Number(e.currentTarget.value)), 0));
+												e.currentTarget.value = String(validatedValue);
+												updateColumn({ columnId, columnUpdate: { type: 'event-column', loopLength: validatedValue } });
+												e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
+											}}
+											style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+											ref={(ref: HTMLElement) => {
+												if (!ref) {
+													return;
+												}
+												ref.parentElement!.style.maxWidth = '2.5em';
+												ref.parentElement!.style.minWidth = '2.5em';
+												ref.parentElement!.style.width = '2.5em';
+											}}
+										/>
+									</Inline>
+								</Stack>}
 						</Stack>
 						<hr style={{ width: '93%', color: 'lightgray' }} />
 						<Box xcss={scrollContainerStyles} ref={scrollableRef}>
