@@ -58,7 +58,6 @@ export const App = () => {
 
     const setSourceAnn = useCallback(async (buffer: ArrayBuffer) => {
         const ann = loadAnn(buffer);
-        console.log(ann);
 
         const contentUrls = await Promise.all(ann.images.map((imageBytes, imageIndex) => bytesToBase64DataUrl(encodePng({
             width: ann.annImages[imageIndex].width,
