@@ -110,7 +110,7 @@ export class BinaryBuffer {
      */
     setInt16(value: number, advance = true, littleEndian = true): void {
         this.view.setInt16(this.offset, value, littleEndian)
-        if (advance) this.offset += 1
+        if (advance) this.offset += 2
     }
 
     /**
@@ -180,3 +180,103 @@ export class BinaryBuffer {
 export const stringUntilNull = (text: string) => {
     return text.substring(0, text.indexOf('\x00'))
 }
+
+const createGrowableArrayBuffer: (internalBuffer?: number[]) => ArrayBuffer = (internalBuffer) => {
+    const buffer = internalBuffer ?? [];
+    return {
+        [Symbol.toStringTag]: 'ArrayBuffer',
+        byteLength: buffer.length,
+        slice: (begin?: number, end?: number) => createGrowableArrayBuffer(buffer.slice(begin, end)),
+    } as ArrayBuffer;
+};
+
+export const createGrowableDataView: () => DataView & { internalBuffer: number[] } = () => {
+    const converterBuffer = new ArrayBuffer(8);
+    const converterArray = new Uint8Array(converterBuffer);
+    const converterView = new DataView(converterBuffer);
+    const buffer: number[] = [];
+    const arrayBuffer = createGrowableArrayBuffer(buffer);
+    const transferFromConverter = (byteOffset: number, valueByteLength: number) => {
+        buffer.length = Math.max(buffer.length, byteOffset + valueByteLength);
+        for (let i = 0; i < valueByteLength; i++) {
+            buffer[byteOffset + i] = converterArray[i];
+        }
+    };
+    return {
+        [Symbol.toStringTag]: 'DataView',
+        internalBuffer: buffer,
+        buffer: arrayBuffer,
+        byteLength: buffer.length,
+        byteOffset: 0,
+        getFloat32: () => {
+            throw new Error('Not implemented');
+        },
+        getFloat64: () => {
+            throw new Error('Not implemented');
+        },
+        getInt8: () => {
+            throw new Error('Not implemented');
+        },
+        getInt16: () => {
+            throw new Error('Not implemented');
+        },
+        getInt32: () => {
+            throw new Error('Not implemented');
+        },
+        getBigInt64: () => {
+            throw new Error('Not implemented');
+        },
+        getUint8: () => {
+            throw new Error('Not implemented');
+        },
+        getUint16: () => {
+            throw new Error('Not implemented');
+        },
+        getUint32: () => {
+            throw new Error('Not implemented');
+        },
+        getBigUint64: () => {
+            throw new Error('Not implemented');
+        },
+        setFloat32: (byteOffset, value, littleEndian = false) => {
+            converterView.setFloat32(0, value, littleEndian);
+            transferFromConverter(byteOffset, 4);
+        },
+        setFloat64: (byteOffset, value, littleEndian = false) => {
+            converterView.setFloat64(0, value, littleEndian);
+            transferFromConverter(byteOffset, 8);
+        },
+        setInt8: (byteOffset, value) => {
+            converterView.setInt8(0, value);
+            transferFromConverter(byteOffset, 1);
+        },
+        setInt16: (byteOffset, value, littleEndian = false) => {
+            converterView.setInt16(0, value, littleEndian);
+            transferFromConverter(byteOffset, 2);
+        },
+        setInt32: (byteOffset, value, littleEndian = false) => {
+            converterView.setInt32(0, value, littleEndian);
+            transferFromConverter(byteOffset, 4);
+        },
+        setBigInt64: (byteOffset, value, littleEndian = false) => {
+            converterView.setBigInt64(0, value, littleEndian);
+            transferFromConverter(byteOffset, 8);
+        },
+        setUint8: (byteOffset, value) => {
+            converterView.setUint8(0, value);
+            transferFromConverter(byteOffset, 1);
+        },
+        setUint16: (byteOffset, value, littleEndian = false) => {
+            converterView.setUint16(0, value, littleEndian);
+            transferFromConverter(byteOffset, 2);
+        },
+        setUint32: (byteOffset, value, littleEndian = false) => {
+            converterView.setUint32(0, value, littleEndian);
+            transferFromConverter(byteOffset, 4);
+        },
+        setBigUint64: (byteOffset, value, littleEndian = false) => {
+            converterView.setBigUint64(0, value, littleEndian);
+            transferFromConverter(byteOffset, 8);
+        },
+    } as DataView & { internalBuffer: number[] };
+};

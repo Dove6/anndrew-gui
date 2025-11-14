@@ -493,7 +493,7 @@ const FrameCardPrimitive = (
 					<span>Name:</span>
 					<Textfield
 						appearance="subtle"
-						placeholder="Image name"
+						placeholder="Frame name"
 						value={name}
 						onChange={e => updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', name: e.currentTarget.value } })}
 						onBlur={e => e.currentTarget.setSelectionRange(0, 0)}

@@ -2,6 +2,14 @@ import { BinaryBuffer } from '../utils'
 import { decompress as CLZWDecompress } from '../compression/clzw'
 import { decompress as CRLEDecompress } from '../compression/crle'
 import { type CompressionType } from '../compression'
+import { annCompressionTypeMapping, type AnnImage } from '../ann';
+
+const imgCompressionTypeMapping: { [compressionType: number]: [CompressionType, CompressionType] } = {
+    0: ['NONE', 'NONE'],
+    2: ['CLZW', 'CLZW'],
+    4: ['NONE', 'NONE'],
+    5: ['JPEG', 'CLZW'],
+};
 
 export interface CompressedImageHeader {
     compressionType: number
@@ -105,18 +113,15 @@ const extractAlphaChannel = (data: Uint8ClampedArray) => {
 const convertToRgba32 = (bytes: Uint8Array) => {
     const rgb = new Uint8Array((bytes.byteLength / 2) * 3)
 
-    let counter = 0
-    for (let i = 0; i < bytes.byteLength; i += 2) {
-        let temp = bytes[i] + bytes[i + 1] * 256
-
-        rgb[counter + 2] = (temp % 32) * 8
-        temp /= 32
-
-        rgb[counter + 1] = (temp % 64) * 4
-        temp /= 64
-
-        rgb[counter] = (temp % 32) * 8
-        counter += 3
+    let counter = 0;
+    for (let i = 0; i < bytes.byteLength; i++) {
+        let temp = (bytes[i * 2 + 1] << 8) | bytes[i * 2];
+        rgb[i * 3 + 2] = Math.round((temp & 0x1f) * 255 / 31);
+        temp >>= 5;
+        rgb[i * 3 + 1] = Math.round((temp & 0x3f) * 255 / 63);
+        temp >>= 6;
+        rgb[i * 3] = Math.round((temp & 0x1f) * 255 / 31);
+        counter += 3;
     }
 
     return rgb
@@ -144,6 +149,27 @@ const addAlpha = (imgBytes: Uint8Array, alphaBytes: Uint8Array | undefined) => {
     return output
 }
 
+// Based on https://github.com/mysliwy112/AM-transcoder/blob/master/src/image.cpp
+const convertFromRgba32 = (bytes: Uint8Array) => {
+    const colorData = new Uint8Array(bytes.length / 2);
+    const alphaData = new Uint8Array(bytes.length / 4);
+
+    for (let i = 0; i < bytes.byteLength / 4; i++) {
+        const [r8, g8, b8, a8] = bytes.slice(i * 4, (i + 1) * 4);
+
+        alphaData[i] = a8;
+
+        const r5 = Math.round(r8 * 31 / 255);
+        const g6 = Math.round(g8 * 63 / 255);
+        const b5 = Math.round(b8 * 31 / 255);
+        const rgb565 = (r5 << (6 + 5)) | (g6 << 5) | b5;
+        colorData[i * 2] = rgb565 & 0xff;
+        colorData[i * 2 + 1] = rgb565 >> 8;
+    }
+
+    return [colorData, alphaData];
+}
+
 export const loadImage = (data: ArrayBuffer): Image => {
     const buffer = new BinaryBuffer(new DataView(data))
     const header = parseHeader(buffer)
@@ -156,12 +182,7 @@ export const loadImage = (data: ArrayBuffer): Image => {
         header.bpp = 24
     }
 
-    const { colorDescriptor, alphaDescriptor } = createDescriptors(header, {
-        0: ['NONE', 'NONE'],
-        2: ['CLZW', 'CLZW'],
-        4: ['NONE', 'NONE'],
-        5: ['JPEG', 'CLZW'],
-    })
+    const { colorDescriptor, alphaDescriptor } = createDescriptors(header, imgCompressionTypeMapping)
     const imgBytes = loadImageWithoutHeader(buffer, colorDescriptor, alphaDescriptor)
     return {
         header,
@@ -212,6 +233,40 @@ export const loadImageWithoutHeader = (
     return imageBytes
 }
 
+export const storeImageWithoutHeader = (
+    image: AnnImage,
+    imageData: Uint8Array<ArrayBuffer>,
+) => {
+    const [imageColorData, imageAlphaData] = convertFromRgba32(imageData);
+    const [colorCompressionType, alphaCompressionType] = annCompressionTypeMapping[image.compressionType];
+    const colorCompression: CompressionDescriptor = {
+        compressionType: colorCompressionType,
+        decompressedLen: imageColorData.length,
+        compressedLen: -1,
+        pixelLen: 2,
+    };
+    const alphaCompression: CompressionDescriptor = {
+        compressionType: alphaCompressionType,
+        decompressedLen: imageAlphaData.length,
+        compressedLen: -1,
+        pixelLen: 1,
+    };
+    const compressedColor = compressImageData(imageColorData, colorCompression);
+    const compressedAlpha = compressImageData(imageAlphaData, alphaCompression);
+
+    const header = {
+        ...image,
+        imageLen: compressedColor.length,
+        alphaLen: compressedAlpha.length,
+    };
+
+    return {
+        header,
+        compressedColor,
+        compressedAlpha,
+    };
+}
+
 const decompressImageData = (buffer: BinaryBuffer, descriptor: CompressionDescriptor) => {
     switch (descriptor.compressionType) {
         case 'NONE':
@@ -234,6 +289,20 @@ const decompressImageData = (buffer: BinaryBuffer, descriptor: CompressionDescri
                     descriptor.pixelLen
                 )
             )
+        case 'JPEG':
+            throw new Error(`Unsupported compression type: ${descriptor.compressionType}`)
+        default:
+            throw new Error(`Unknown compression type: ${descriptor.compressionType}`)
+    }
+}
+
+const compressImageData = (data: Uint8Array<ArrayBuffer>, descriptor: CompressionDescriptor) => {
+    switch (descriptor.compressionType) {
+        case 'NONE':
+            return data;
+        case 'CLZW':
+        case 'CRLE':
+        case 'CLZW_IN_CRLE':
         case 'JPEG':
             throw new Error(`Unsupported compression type: ${descriptor.compressionType}`)
         default:
