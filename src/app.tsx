@@ -27,7 +27,6 @@ const boardStyles = xcss({
     justifyContent: 'center',
     gap: 'space.200',
     flexDirection: 'row',
-    height: '720px',
 });
 
 type State =
@@ -174,14 +173,13 @@ export const App = () => {
         if (!element) {
             return;
         }
-        element.style.height = '720px';
         element.style.width = '90%';
         element.style.backgroundColor = state === isOverState
             ? token('color.background.selected.hovered')
             : token('elevation.surface.sunken');
     }, [buttonRef.current, state]);
 
-    return (typeof (initialBoardState) !== 'undefined'
+    const appInsides = (typeof (initialBoardState) !== 'undefined'
         ? <BoardExample instanceId={instanceId} initialData={initialBoardState}></BoardExample>
         : <Box xcss={boardStyles}>
             <IconButton
@@ -227,4 +225,6 @@ export const App = () => {
             <input type="file" ref={uploaderRef} style={{ display: 'none' }} />
         </Box>
     );
+
+    return <Box xcss={xcss({ width: '100vw', height: '100vh' })}>{appInsides}</Box>;
 };

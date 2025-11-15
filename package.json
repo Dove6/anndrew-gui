@@ -19,6 +19,7 @@
     "@atlaskit/ds-lib": "5.2.0",
     "@atlaskit/heading": "5.2.11",
     "@atlaskit/icon": "28.5.3",
+    "@atlaskit/image": "^3.0.4",
     "@atlaskit/motion": "5.3.8",
     "@atlaskit/platform-feature-flags": "latest",
     "@atlaskit/pragmatic-drag-and-drop": "1.7.7",

@@ -38,6 +38,9 @@ importers:
       '@atlaskit/icon':
         specifier: 28.5.3
         version: 28.5.3(@babel/core@7.28.5)(@types/react@18.3.26)(react@18.3.1)
+      '@atlaskit/image':
+        specifier: ^3.0.4
+        version: 3.0.4(@types/react@18.3.26)(react@18.3.1)
       '@atlaskit/motion':
         specifier: 5.3.8
         version: 5.3.8(@types/react@18.3.26)(react@18.3.1)
@@ -205,6 +208,11 @@ packages:
 
   '@atlaskit/icon@28.5.3':
     resolution: {integrity: sha512-EU/WwD2hW00NOZWwxO/ls0fu7yMzA2z69T9XG6iAXZr6ZyUrI9zDoag8Fu1fH6BeRYhIzmIWRKNIGsN/xqWhnQ==}
+    peerDependencies:
+      react: ^18.2.0
+
+  '@atlaskit/image@3.0.4':
+    resolution: {integrity: sha512-efRkPCJmie8wzr+sKIE01lzryvag2ebfuLW7D57IOuz6QYvV6F/nqod+yVzxm0KcG45XlAl1bS3RWJSaXvX/Zw==}
     peerDependencies:
       react: ^18.2.0
 
@@ -1832,6 +1840,17 @@ snapshots:
       react: 18.3.1
     transitivePeerDependencies:
       - '@babel/core'
+      - '@types/react'
+      - supports-color
+
+  '@atlaskit/image@3.0.4(@types/react@18.3.26)(react@18.3.1)':
+    dependencies:
+      '@atlaskit/app-provider': 3.2.5(@types/react@18.3.26)(react@18.3.1)
+      '@atlaskit/tokens': 8.0.0(@types/react@18.3.26)(react@18.3.1)
+      '@babel/runtime': 7.28.4
+      '@compiled/react': 0.18.6(react@18.3.1)
+      react: 18.3.1
+    transitivePeerDependencies:
       - '@types/react'
       - supports-color
 
