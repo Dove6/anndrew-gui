@@ -6,7 +6,7 @@ import {
 } from 'react';
 
 import UploadIcon from '@atlaskit/icon/core/upload';
-import { IconButton } from '@atlaskit/button/new';
+import Button, { IconButton } from '@atlaskit/button/new';
 import { preventUnhandled } from '@atlaskit/pragmatic-drag-and-drop/prevent-unhandled';
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import { containsFiles, getFiles } from '@atlaskit/pragmatic-drag-and-drop/external/file';
@@ -18,6 +18,7 @@ import { loadAnn } from './fileFormats/ann';
 import type { BoardState, ColumnData, FrameCard, ImageCard, ImageColumn } from './models';
 import { encode as encodePng } from 'fast-png';
 import { token } from '@atlaskit/tokens';
+import PremiumIcon from '@atlaskit/icon/core/premium';
 
 const boardStyles = xcss({
     paddingBlockStart: 'space.250',
@@ -27,7 +28,6 @@ const boardStyles = xcss({
     alignItems: 'center',
     gap: 'space.200',
     flexDirection: 'column',
-    height: '50vh',
 });
 
 type State =
@@ -118,6 +118,29 @@ export const App = () => {
         });
     }, [instanceId, setInitialBoardState]);
 
+    const createEmpty = useCallback(() => {
+        const imagesColumn: ColumnData = {
+            type: 'image-column',
+            columnId: 'images',
+            items: [],
+        };
+
+        setInitialBoardState({
+            columnMap: {
+                [imagesColumn.columnId]: imagesColumn,
+            },
+            orderedColumnIds: [imagesColumn.columnId],
+
+            filename: 'animation',
+            author: 'You',
+            description: '',
+            fps: 16,
+            opacity: 255,
+
+            lastOperation: null,
+        });
+    }, [instanceId, setInitialBoardState]);
+
     useEffect(() => {
         const element = buttonRef.current;
         return element ? combine(
@@ -175,7 +198,7 @@ export const App = () => {
             return;
         }
         element.style.width = '90%';
-        element.style.height = '100%';
+        element.style.height = '50vh';
         element.style.backgroundColor = state === isOverState
             ? token('color.background.selected.hovered')
             : token('elevation.surface.sunken');
@@ -228,6 +251,14 @@ export const App = () => {
                 }}
             />
             <input type="file" ref={uploaderRef} style={{ display: 'none' }} />
+            <div style={{ marginBlock: '0.5em' }}></div>
+            <Button
+                iconBefore={PremiumIcon}
+                appearance="discovery"
+                onClick={createEmpty}
+            >
+                Or create a new file
+            </Button>
         </Box>
     );
 
