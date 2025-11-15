@@ -30,7 +30,7 @@ const eventScrollContainerStyles = xcss({
 	display: 'flex',
 	gap: 'space.200',
 	flexDirection: 'row',
-	height: '720px',
+	width: '100%',
 });
 
 export default function BoardExample({ instanceId, initialData }: { instanceId: symbol, initialData: BoardState }) {

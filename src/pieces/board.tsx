@@ -13,11 +13,12 @@ type BoardProps = {
 const boardStyles = xcss({
 	paddingInlineStart: 'space.200',
 	paddingInlineEnd: 'space.200',
+	flex: '0 1 auto',
 	display: 'flex',
 	justifyContent: 'center',
 	gap: 'space.200',
 	flexDirection: 'row',
-	height: '720px',
+	height: 'calc(100vh - 90px)',
 });
 
 const Board = forwardRef<HTMLDivElement, BoardProps>(({ children }: BoardProps, ref) => {
