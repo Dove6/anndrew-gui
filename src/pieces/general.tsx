@@ -13,6 +13,8 @@ type GeneralProps = {
 	description: string;
 	fps: number;
 	opacity: number;
+	onClear: () => void,
+	onSave: () => void,
 };
 
 const generalStyles = xcss({
@@ -33,7 +35,7 @@ const propertiesBox = xcss({
 	overflow: 'auto',
 });
 
-const General = ({ author, description, fps, opacity }: GeneralProps) => {
+const General = ({ author, description, fps, opacity, onClear, onSave }: GeneralProps) => {
 	const { updateBoard } = useBoardContext();
 
 	return (
@@ -54,7 +56,7 @@ const General = ({ author, description, fps, opacity }: GeneralProps) => {
 					position: 'auto',
 					hideTooltipOnClick: true,
 				}}
-				onClick={_ => { console.log('clicked'); }}
+				onClick={onClear}
 			/>
 			<Box xcss={propertiesBox}>
 				<Inline alignBlock="baseline">
@@ -157,7 +159,7 @@ const General = ({ author, description, fps, opacity }: GeneralProps) => {
 				tooltip={{
 					position: 'auto',
 				}}
-				onClick={_ => { console.log('clicked'); }}
+				onClick={onSave}
 			/>
 		</Box>
 	);

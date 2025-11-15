@@ -37,13 +37,13 @@ const idleState: State = { type: 'idle' };
 const isOverState: State = { type: 'is-over' };
 
 async function bytesToBase64DataUrl(bytes: BlobPart, type = 'application/octet-stream') {
-  return await new Promise((resolve, reject) => {
-    const reader = Object.assign(new FileReader(), {
-      onload: () => resolve(reader.result),
-      onerror: () => reject(reader.error),
+    return await new Promise((resolve, reject) => {
+        const reader = Object.assign(new FileReader(), {
+            onload: () => resolve(reader.result),
+            onerror: () => reject(reader.error),
+        });
+        reader.readAsDataURL(new File([bytes], '', { type }));
     });
-    reader.readAsDataURL(new File([bytes], '', { type }));
-  });
 }
 
 export const App = () => {
@@ -101,7 +101,7 @@ export const App = () => {
             } as FrameCard)),
         } as ColumnData));
 
-        const columns = [ imageColumn, ...events ];
+        const columns = [imageColumn, ...events];
 
         setInitialBoardState({
             columnMap: Object.fromEntries(columns.map(column => [column.columnId, column])),
@@ -165,7 +165,7 @@ export const App = () => {
                     });
                 },
             }),
-        ) : () => {};
+        ) : () => { };
     }, [instanceId, buttonRef.current]);
 
     useEffect(() => {
@@ -179,8 +179,10 @@ export const App = () => {
             : token('elevation.surface.sunken');
     }, [buttonRef.current, state]);
 
+    const onClear = useCallback(() => setInitialBoardState(undefined), [setInitialBoardState]);
+
     const appInsides = (typeof (initialBoardState) !== 'undefined'
-        ? <BoardExample instanceId={instanceId} initialData={initialBoardState}></BoardExample>
+        ? <BoardExample instanceId={instanceId} initialData={initialBoardState} onClear={onClear}></BoardExample>
         : <Box xcss={boardStyles}>
             <IconButton
                 icon={UploadIcon}

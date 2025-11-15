@@ -23,6 +23,8 @@ import { createRegistry } from './pieces/registry';
 import General from './pieces/general';
 import { ColumnAdder } from './pieces/column-adder';
 import { Box, xcss } from '@atlaskit/primitives';
+import { dumpAnn, type ANN } from './fileFormats/ann';
+import { decode as decodePng } from 'fast-png';
 
 const eventScrollContainerStyles = xcss({
 	maxWidth: '100%',
@@ -33,7 +35,26 @@ const eventScrollContainerStyles = xcss({
 	width: '100%',
 });
 
-export default function BoardExample({ instanceId, initialData }: { instanceId: symbol, initialData: BoardState }) {
+function base64ToArrayBuffer(dataUrl: string) {
+	const [base64] = dataUrl.split(",").slice(-1);
+	var binaryString = atob(base64);
+	var binaryLen = binaryString.length;
+	var bytes = new Uint8Array(binaryLen);
+	for (var i = 0; i < binaryLen; i++) {
+		var ascii = binaryString.charCodeAt(i);
+		bytes[i] = ascii;
+	}
+	return bytes;
+}
+
+function saveBlob(filename: string, blob: Blob) {
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+};
+
+export default function BoardExample({ instanceId, initialData, onClear }: { instanceId: symbol, initialData: BoardState, onClear: () => void }) {
 	const [data, setData] = useState<BoardState>(initialData);
 
 	const stableData = useRef(data);
@@ -923,9 +944,62 @@ export default function BoardExample({ instanceId, initialData }: { instanceId: 
 
 	const eventScrollableRef = useRef<HTMLDivElement | null>(null);
 
+	const onSave = useCallback(() => {
+		const events = Object.values(data.columnMap).filter(c => c.type === 'event-column');
+		const images = (Object.values(data.columnMap).find(c => c.type === 'image-column')?.items ?? []).filter(i => i.type === 'image-card');
+		const pngImages = images.map(i => decodePng(base64ToArrayBuffer(i.contentUrl)));
+
+		const annToSave: ANN = {
+			header: {
+				author: data.author.trim(),
+				description: data.description.trim(),
+				fps: Math.max(0, data.fps),
+				bpp: 16,
+				flags: 0,
+				transparency: data.opacity,
+				randomFramesNumber: 0,
+				eventsCount: events.length,
+				framesCount: images.length,
+			},
+			events: events.map(e => {
+				const frames = e.items.filter(i => i.type === 'frame-card');
+				return {
+					name: e.name.trim(),
+					transparency: e.opacity,
+					loopAfterFrame: e.loopLength,
+					framesCount: e.items.length,
+					framesImageMapping: frames.map(f => images.findIndex(i => i.cardId === f.imageRef.cardId)),
+					frames: frames.map(f => ({
+						positionX: f.offset.x,
+						positionY: f.offset.y,
+						hasSounds: f.sfx.length > 0 ? 1 : 0,
+						transparency: f.opacity,
+						name: f.name.trim(),
+						sounds: f.sfx,
+					})),
+				};
+			}),
+			annImages: images.map((image, index) => ({
+				name: image.name,
+				width: pngImages[index].width,
+				height: pngImages[index].height,
+				positionX: image.offset.x,
+				positionY: image.offset.y,
+				compressionType: 0,
+				imageLen: pngImages[index].data.byteLength >> 1,
+				alphaLen: pngImages[index].data.byteLength >> 2,
+			})),
+			images: pngImages.map(i => i.data as Uint8Array<ArrayBuffer>),
+		};
+		console.log(annToSave);
+		const annData = dumpAnn(annToSave);
+		console.log(annData);
+		saveBlob('output.ann', annData);
+	}, [data]);
+
 	return (
 		<BoardContext.Provider value={contextValue}>
-			<General {...data} />
+			<General {...data} onClear={onClear} onSave={onSave} />
 			<hr style={{ color: 'gray' }} />
 			<Board>
 				{data.orderedColumnIds.filter(columnId => data.columnMap[columnId].type == 'image-column').map((columnId, order) => {
