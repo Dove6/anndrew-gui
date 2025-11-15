@@ -5,6 +5,7 @@ import { IconButton } from '@atlaskit/button/new';
 import DeleteIcon from '@atlaskit/icon/core/delete';
 import { useBoardContext } from './board-context';
 import Image from '@atlaskit/image';
+import Krabik from '../Krabik.png';
 
 type GeneralProps = {
 	filename: string;
@@ -163,7 +164,7 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 			</Box>
 			<IconButton
 				icon={_ => (
-					<Image src="/Krabik.png" alt="Anndrew logo" style={{ maxHeight: '40px' }} />
+					<Image src={Krabik} alt="Anndrew logo" style={{ maxHeight: '40px' }} />
 				)}
 				label="Download edited ANN"
 				appearance="primary"
