@@ -332,5 +332,5 @@ export const dumpAnn = (ann: ANN) => {
 
     storedParts.splice(0, 0, new Uint8Array(viewBuffer));
 
-    return new Blob(storedParts);
+    return new Blob(storedParts, { type: 'application/octet-stream' });
 }
