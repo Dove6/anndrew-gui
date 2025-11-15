@@ -693,6 +693,7 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 			setData((data) => {
 				return {
 					...data,
+					filename: boardUpdate.filename === undefined ? data.filename : boardUpdate.filename,
 					fps: boardUpdate.fps === undefined ? data.fps : boardUpdate.fps,
 					opacity: boardUpdate.opacity === undefined ? data.opacity : boardUpdate.opacity,
 					author: boardUpdate.author === undefined ? data.author : boardUpdate.author,
@@ -991,10 +992,8 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 			})),
 			images: pngImages.map(i => i.data as Uint8Array<ArrayBuffer>),
 		};
-		console.log(annToSave);
 		const annData = dumpAnn(annToSave);
-		console.log(annData);
-		saveBlob('output.ann', annData);
+		saveBlob(data.filename + '.ann', annData);
 	}, [data]);
 
 	return (

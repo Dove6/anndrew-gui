@@ -24,9 +24,10 @@ const boardStyles = xcss({
     paddingInlineStart: 'space.200',
     paddingInlineEnd: 'space.200',
     display: 'flex',
-    justifyContent: 'center',
+    alignItems: 'center',
     gap: 'space.200',
-    flexDirection: 'row',
+    flexDirection: 'column',
+    height: '50vh',
 });
 
 type State =
@@ -55,7 +56,7 @@ export const App = () => {
 
     const [initialBoardState, setInitialBoardState] = useState<BoardState>();
 
-    const setSourceAnn = useCallback(async (buffer: ArrayBuffer) => {
+    const setSourceAnn = useCallback(async (buffer: ArrayBuffer, filename: string) => {
         const ann = loadAnn(buffer);
 
         const contentUrls = await Promise.all(ann.images.map((imageBytes, imageIndex) => bytesToBase64DataUrl(encodePng({
@@ -107,6 +108,7 @@ export const App = () => {
             columnMap: Object.fromEntries(columns.map(column => [column.columnId, column])),
             orderedColumnIds: columns.map(column => column.columnId),
 
+            filename: filename.toLowerCase().endsWith('.ann') ? filename.slice(0, filename.length - 4) : filename,
             author: ann.header.author,
             description: ann.header.description,
             fps: ann.header.fps,
@@ -143,7 +145,6 @@ export const App = () => {
 
                     const files = getFiles({ source });
                     files.forEach((file) => {
-                        console.log('handling file', file);
                         if (file == null) {
                             return;
                         }
@@ -155,7 +156,7 @@ export const App = () => {
                             listener: (_) => {
                                 const result = reader.result;
                                 if (typeof result !== 'string' && result !== null) {
-                                    setSourceAnn(result);
+                                    setSourceAnn(result, file.name);
                                 } else {
                                     console.error('Invalid type of FileReader result');
                                 }
@@ -174,6 +175,7 @@ export const App = () => {
             return;
         }
         element.style.width = '90%';
+        element.style.height = '100%';
         element.style.backgroundColor = state === isOverState
             ? token('color.background.selected.hovered')
             : token('elevation.surface.sunken');
@@ -184,6 +186,7 @@ export const App = () => {
     const appInsides = (typeof (initialBoardState) !== 'undefined'
         ? <BoardExample instanceId={instanceId} initialData={initialBoardState} onClear={onClear}></BoardExample>
         : <Box xcss={boardStyles}>
+            <span>Upload an ANN file below</span>
             <IconButton
                 icon={UploadIcon}
                 label="Upload ANN file"
@@ -213,7 +216,7 @@ export const App = () => {
                             listener: (_) => {
                                 const result = reader.result;
                                 if (typeof result !== 'string' && result !== null) {
-                                    setSourceAnn(result);
+                                    setSourceAnn(result, file.name);
                                 } else {
                                     console.error('Invalid type of FileReader result');
                                 }
