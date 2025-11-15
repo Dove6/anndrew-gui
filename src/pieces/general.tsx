@@ -6,9 +6,8 @@ import DeleteIcon from '@atlaskit/icon/core/delete';
 import { useBoardContext } from './board-context';
 import Image from '@atlaskit/image';
 
-import KrabikImage from '../avatars/Krabik.png';
-
 type GeneralProps = {
+	filename: string;
 	author: string;
 	description: string;
 	fps: number;
@@ -35,7 +34,7 @@ const propertiesBox = xcss({
 	overflow: 'auto',
 });
 
-const General = ({ author, description, fps, opacity, onClear, onSave }: GeneralProps) => {
+const General = ({ filename, author, description, fps, opacity, onClear, onSave }: GeneralProps) => {
 	const { updateBoard } = useBoardContext();
 
 	return (
@@ -59,6 +58,26 @@ const General = ({ author, description, fps, opacity, onClear, onSave }: General
 				onClick={onClear}
 			/>
 			<Box xcss={propertiesBox}>
+				<Inline alignBlock="baseline">
+					<span style={{ marginRight: '0.5em' }}>Filename:</span>
+					<Textfield
+						appearance="standard"
+						placeholder="Filename"
+						value={filename}
+						onChange={e => updateBoard({ boardUpdate: { filename: e.currentTarget.value } })}
+						onBlur={e => e.currentTarget.setSelectionRange(0, 0)}
+						style={{ paddingBlock: '1px', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+						ref={(ref: HTMLElement) => {
+							if (!ref) {
+								return;
+							}
+							ref.parentElement!.style.maxWidth = '8em';
+							ref.parentElement!.style.minWidth = '8em';
+							ref.parentElement!.style.width = '8em';
+						}}
+					/>
+					<span>.ann</span>
+				</Inline>
 				<Inline alignBlock="baseline">
 					<span style={{ marginRight: '0.5em' }}>Author:</span>
 					<Textfield
@@ -144,7 +163,7 @@ const General = ({ author, description, fps, opacity, onClear, onSave }: General
 			</Box>
 			<IconButton
 				icon={_ => (
-					<Image src={KrabikImage} alt="Anndrew logo" style={{ maxHeight: '40px' }} />
+					<Image src="/Krabik.png" alt="Anndrew logo" style={{ maxHeight: '40px' }} />
 				)}
 				label="Download edited ANN"
 				appearance="primary"
