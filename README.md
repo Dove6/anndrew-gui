@@ -1,73 +1,49 @@
-# React + TypeScript + Vite
+# ANNdrew GUI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Web-based editor for files in the ANN format used for storing 2D animations in games created by Aidem Media.
 
-Currently, two official plugins are available:
+## How to use
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+The project is deployed to: https://dove6.github.io/anndrew-gui/
 
-## React Compiler
+First, you have to upload a file to edit by clicking the "Upload ANN file" button or simply dragging the file from your disk and dropping it within the button. If you want to start from ~~square one~~ zero, click the "Or create a new file" button instead.
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+What awaits you after the file loads, is the main editor view consisting of multiple columns. The first column from the left ("Images") contains the list of all reference image frames (so-called images). The following columns (if any) represent the animated sequences (so-called events) stored inside the file. Each event is composed of references to the images (so-called frames).
 
-## Expanding the ESLint configuration
+Images can be added by dragging PNG[^1] files from disk and dropping them on the "Images" column. Entries in the "Images" column can be also replaced in-place using images loaded from disk (using the "Replace image from disk" button). Event can be appended by clicking the "Create event" button on the right. Frames can be added to an event by dragging images from the "Images" column and dropping them on the column related to that event. Frames can be moved between events using drag-and-drop mechanics. All columns and their entries have drop-down menus with additional options (e.g. for removing a column).
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+The header of the editor view consists of global properties of the file, including its filename, author, description, animation speed and opacity. Aside from that, each image has its own name and absolute offset (from the upper left corner of the screen). Then, each event has its name, opacity and loop length (a number of frames after which it restarts, with 0 meaning none). Finally, each frame has a name, offset (relative to image offset), opacity and a list of paths of sound files to be randomly chosen and played when the frame is displayed. All offsets are summed together and all opacities are multiplied.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+After the work is done, the final ANN file can be exported by clicking on the "Download edited ANN" button in the upper right corner of the editor view. Work can be also discarded using the "Close without saving" button in the upper left corner of the page.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Development
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+This is a static site written using [React](https://react.dev/) and [TypeScript](https://www.typescriptlang.org/). Its built using the following stack: [pnpm](https://pnpm.io/), [Vite](https://vite.dev/), [Babel](https://babeljs.io/), and [Rolldown](https://rolldown.rs/).
+
+### Setting up dependencies
+
+```sh
+pnpm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Running development server
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```sh
+pnpm run dev
 ```
+
+### Building the page
+
+```sh
+pnpm run build
+```
+
+## Related projects
+
+- command-line tool for manipulating ANN and IMG files: https://github.com/mysliwy112/AM-transcoder
+- collection of decoded ANN files from the original games: https://github.com/mysliwy112/mysliwy112.github.io
+- reimplementation of the PiKlib/BlooMoo engine Reksio games run on: https://github.com/ReksioEngine/ReksioEngine
+- encoder/decoder of PiKlib/BlooMoo script files: https://github.com/Dove6/AMkd
+
+---
+[^1]: PNG is currently the only supported image format.
