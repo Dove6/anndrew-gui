@@ -11,14 +11,13 @@ import { preventUnhandled } from '@atlaskit/pragmatic-drag-and-drop/prevent-unha
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import { containsFiles, getFiles } from '@atlaskit/pragmatic-drag-and-drop/external/file';
 import { dropTargetForExternal, monitorForExternal } from '@atlaskit/pragmatic-drag-and-drop/external/adapter';
-import { bind, type UnbindFn } from 'bind-event-listener';
 import BoardExample from './example';
 import { Box, xcss } from '@atlaskit/primitives';
 import { loadAnn } from './fileFormats/ann';
 import type { BoardState, ColumnData, FrameCard, ImageCard, ImageColumn } from './models';
-import { encode as encodePng } from 'fast-png';
 import { token } from '@atlaskit/tokens';
 import PremiumIcon from '@atlaskit/icon/core/premium';
+import { Jimp, type JimpInstance } from "jimp";
 
 const boardStyles = xcss({
     paddingBlockStart: 'space.250',
@@ -37,16 +36,6 @@ type State =
 const idleState: State = { type: 'idle' };
 const isOverState: State = { type: 'is-over' };
 
-async function bytesToBase64DataUrl(bytes: BlobPart, type = 'application/octet-stream') {
-    return await new Promise((resolve, reject) => {
-        const reader = Object.assign(new FileReader(), {
-            onload: () => resolve(reader.result),
-            onerror: () => reject(reader.error),
-        });
-        reader.readAsDataURL(new File([bytes], '', { type }));
-    });
-}
-
 export const App = () => {
     const [instanceId] = useState(() => Symbol('instance-id'));
 
@@ -59,11 +48,12 @@ export const App = () => {
     const setSourceAnn = useCallback(async (buffer: ArrayBuffer, filename: string) => {
         const ann = loadAnn(buffer);
 
-        const contentUrls = await Promise.all(ann.images.map((imageBytes, imageIndex) => bytesToBase64DataUrl(encodePng({
+        const loadedGraphics: JimpInstance[] = await Promise.all(ann.images.map((imageBytes, imageIndex) => Jimp.fromBitmap({
             width: ann.annImages[imageIndex].width,
             height: ann.annImages[imageIndex].height,
             data: imageBytes,
-        }) as BlobPart)));
+        })));
+        const contentUrls = await Promise.all(loadedGraphics.map(loaded => loaded.getBase64('image/png')));
 
         const images = ann.annImages.map((image, imageIndex) => ({
             type: 'image-card',
@@ -167,25 +157,12 @@ export const App = () => {
                     preventUnhandled.stop();
 
                     const files = getFiles({ source });
-                    files.forEach((file) => {
+                    files.forEach(async (file) => {
                         if (file == null) {
                             return;
                         }
-
-                        const reader = new FileReader();
-                        reader.readAsArrayBuffer(file);
-                        const unbind: UnbindFn = bind(reader, {
-                            type: 'load',
-                            listener: (_) => {
-                                const result = reader.result;
-                                if (typeof result !== 'string' && result !== null) {
-                                    setSourceAnn(result, file.name);
-                                } else {
-                                    console.error('Invalid type of FileReader result');
-                                }
-                                unbind();
-                            },
-                        });
+                        const buffer = await file.arrayBuffer();
+                        setSourceAnn(buffer, file.name);
                     });
                 },
             }),
@@ -225,27 +202,15 @@ export const App = () => {
                         input.oncancel = null;
                         input.onchange = null;
                     };
-                    input.onchange = () => {
+                    input.onchange = async () => {
                         input.oncancel = null;
                         input.onchange = null;
                         if (input.files?.length !== 1) {
                             return;
                         }
                         const file = input.files[0];
-                        const reader = new FileReader();
-                        reader.readAsArrayBuffer(file);
-                        const unbind: UnbindFn = bind(reader, {
-                            type: 'load',
-                            listener: (_) => {
-                                const result = reader.result;
-                                if (typeof result !== 'string' && result !== null) {
-                                    setSourceAnn(result, file.name);
-                                } else {
-                                    console.error('Invalid type of FileReader result');
-                                }
-                                unbind();
-                            },
-                        });
+                        const buffer = await file.arrayBuffer();
+                        setSourceAnn(buffer, file.name);
                     };
                     input.click();
                 }}

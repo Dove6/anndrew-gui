@@ -208,6 +208,9 @@ export const createGrowableDataView: () => DataView & { internalBuffer: number[]
         buffer: arrayBuffer,
         byteLength: buffer.length,
         byteOffset: 0,
+        getFloat16: () => {
+            throw new Error('Not implemented');
+        },
         getFloat32: () => {
             throw new Error('Not implemented');
         },
@@ -237,6 +240,10 @@ export const createGrowableDataView: () => DataView & { internalBuffer: number[]
         },
         getBigUint64: () => {
             throw new Error('Not implemented');
+        },
+        setFloat16: (byteOffset, value, littleEndian = false) => {
+            converterView.setFloat16(0, value, littleEndian);
+            transferFromConverter(byteOffset, 2);
         },
         setFloat32: (byteOffset, value, littleEndian = false) => {
             converterView.setFloat32(0, value, littleEndian);

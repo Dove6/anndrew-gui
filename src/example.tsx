@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import invariant from 'tiny-invariant';
-import { bind, type UnbindFn } from 'bind-event-listener';
 
 import { triggerPostMoveFlash } from '@atlaskit/pragmatic-drag-and-drop-flourish/trigger-post-move-flash';
 import { extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
@@ -24,7 +23,7 @@ import General from './pieces/general';
 import { ColumnAdder } from './pieces/column-adder';
 import { Box, xcss } from '@atlaskit/primitives';
 import { dumpAnn, type ANN } from './fileFormats/ann';
-import { decode as decodePng } from 'fast-png';
+import { Jimp } from "jimp";
 
 const eventScrollContainerStyles = xcss({
 	maxWidth: '100%',
@@ -35,23 +34,11 @@ const eventScrollContainerStyles = xcss({
 	width: '100%',
 });
 
-function base64ToArrayBuffer(dataUrl: string) {
-	const [base64] = dataUrl.split(",").slice(-1);
-	var binaryString = atob(base64);
-	var binaryLen = binaryString.length;
-	var bytes = new Uint8Array(binaryLen);
-	for (var i = 0; i < binaryLen; i++) {
-		var ascii = binaryString.charCodeAt(i);
-		bytes[i] = ascii;
-	}
-	return bytes;
-}
-
 function saveBlob(filename: string, blob: Blob) {
-    var link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = filename;
-    link.click();
+	var link = document.createElement('a');
+	link.href = URL.createObjectURL(blob);
+	link.download = filename;
+	link.click();
 };
 
 export default function BoardExample({ instanceId, initialData, onClear }: { instanceId: symbol, initialData: BoardState, onClear: () => void }) {
@@ -755,7 +742,7 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 					})();
 
 					const files = getFiles({ source });
-					files.forEach((file) => {
+					files.forEach(async (file) => {
 						if (file == null) {
 							return;
 						}
@@ -764,30 +751,20 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 						}
 
 						const cardId = `id:${getNextCardId()}`;
-						const reader = new FileReader();
-						reader.readAsDataURL(file);
-						const unbind: UnbindFn = bind(reader, {
-							type: 'load',
-							listener: (_) => {
-								const result = reader.result;
-								if (typeof result === 'string') {
-									insertCard({
-										item: {
-											type: 'image-card',
-											cardId,
-											name: file.name,
-											contentUrl: result,
-											offset: { x: 0, y: 0 },
-										},
-										finishColumnId,
-										itemIndexInFinishColumn,
-										trigger,
-									});
-								} else {
-									console.error('Invalid type of FileReader result');
-								}
-								unbind();
+						const buffer = await file.arrayBuffer();
+						const image = await Jimp.read(buffer);
+						const contentUrl = await image.getBase64('image/png');
+						insertCard({
+							item: {
+								type: 'image-card',
+								cardId,
+								name: file.name,
+								contentUrl,
+								offset: { x: 0, y: 0 },
 							},
+							finishColumnId,
+							itemIndexInFinishColumn,
+							trigger,
 						});
 					});
 				},
@@ -945,10 +922,10 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 
 	const eventScrollableRef = useRef<HTMLDivElement | null>(null);
 
-	const onSave = useCallback(() => {
+	const onSave = useCallback(async () => {
 		const events = Object.values(data.columnMap).filter(c => c.type === 'event-column');
 		const images = (Object.values(data.columnMap).find(c => c.type === 'image-column')?.items ?? []).filter(i => i.type === 'image-card');
-		const pngImages = images.map(i => decodePng(base64ToArrayBuffer(i.contentUrl)));
+		const bitmaps = (await Promise.all(images.map(i => Jimp.read(i.contentUrl)))).map(i => i.bitmap);
 
 		const annToSave: ANN = {
 			header: {
@@ -982,15 +959,15 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 			}),
 			annImages: images.map((image, index) => ({
 				name: image.name,
-				width: pngImages[index].width,
-				height: pngImages[index].height,
+				width: bitmaps[index].width,
+				height: bitmaps[index].height,
 				positionX: image.offset.x,
 				positionY: image.offset.y,
 				compressionType: 0,
-				imageLen: pngImages[index].data.byteLength >> 1,
-				alphaLen: pngImages[index].data.byteLength >> 2,
+				imageLen: bitmaps[index].data.byteLength >> 1,
+				alphaLen: bitmaps[index].data.byteLength >> 2,
 			})),
-			images: pngImages.map(i => i.data as Uint8Array<ArrayBuffer>),
+			images: bitmaps.map(i => i.data as Uint8Array<ArrayBuffer>),
 		};
 		const annData = dumpAnn(annToSave);
 		saveBlob(data.filename + '.ann', annData);

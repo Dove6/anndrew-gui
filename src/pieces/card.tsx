@@ -47,7 +47,7 @@ import { type CardData, type ImageCard, type FrameCard, type EventColumn } from 
 
 import { useBoardContext } from './board-context';
 import { useColumnContext } from './column-context';
-import { bind, type UnbindFn } from 'bind-event-listener';
+import { Jimp } from 'jimp';
 
 type State =
 	| { type: 'idle' }
@@ -283,7 +283,7 @@ const ImageCardPrimitive = (
 								input.oncancel = null;
 								input.onchange = null;
 							};
-							input.onchange = () => {
+							input.onchange = async () => {
 								input.oncancel = null;
 								input.onchange = null;
 								if (input.files?.length !== 1) {
@@ -294,20 +294,11 @@ const ImageCardPrimitive = (
 									console.error('Not an image');
 									return;
 								}
-								const reader = new FileReader();
-								reader.readAsDataURL(file);
-								const unbind: UnbindFn = bind(reader, {
-									type: 'load',
-									listener: (_) => {
-										const result = reader.result;
-										if (typeof result === 'string') {
-											updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', contentUrl: result } });
-										} else {
-											console.error('Invalid type of FileReader result');
-										}
-										unbind();
-									},
-								});
+
+								const buffer = await file.arrayBuffer();
+								const image = await Jimp.read(buffer);
+								const contentUrl = await image.getBase64('image/png');
+								updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', contentUrl } });
 							};
 							input.click();
 						}}
