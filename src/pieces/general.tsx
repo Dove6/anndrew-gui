@@ -64,9 +64,11 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 					<Textfield
 						appearance="standard"
 						placeholder="Filename"
-						value={filename}
-						onChange={e => updateBoard({ boardUpdate: { filename: e.currentTarget.value } })}
-						onBlur={e => e.currentTarget.setSelectionRange(0, 0)}
+						defaultValue={filename}
+						onBlur={e => {
+							updateBoard({ boardUpdate: { filename: e.currentTarget.value } });
+							e.currentTarget.setSelectionRange(0, 0);
+						}}
 						style={{ paddingBlock: '1px', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
 						ref={(ref: HTMLElement) => {
 							if (!ref) {
@@ -84,9 +86,11 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 					<Textfield
 						appearance="standard"
 						placeholder="Author"
-						value={author}
-						onChange={e => updateBoard({ boardUpdate: { author: e.currentTarget.value } })}
-						onBlur={e => e.currentTarget.setSelectionRange(0, 0)}
+						defaultValue={author}
+						onBlur={e => {
+							updateBoard({ boardUpdate: { author: e.currentTarget.value } });
+							e.currentTarget.setSelectionRange(0, 0);
+						}}
 						style={{ paddingBlock: '1px', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
 						ref={(ref: HTMLElement) => {
 							if (!ref) {
@@ -103,9 +107,11 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 					<Textfield
 						appearance="standard"
 						placeholder="Description"
-						value={description}
-						onChange={e => updateBoard({ boardUpdate: { description: e.currentTarget.value } })}
-						onBlur={e => e.currentTarget.setSelectionRange(0, 0)}
+						defaultValue={description}
+						onBlur={e => {
+							updateBoard({ boardUpdate: { description: e.currentTarget.value } });
+							e.currentTarget.setSelectionRange(0, 0);
+						}}
 						style={{ paddingBlock: '1px', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
 						ref={(ref: HTMLElement) => {
 							if (!ref) {

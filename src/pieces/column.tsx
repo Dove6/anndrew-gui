@@ -368,9 +368,11 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 										<Textfield
 											appearance="subtle"
 											placeholder="Image name"
-											value={column.name}
-											onChange={e => updateColumn({ columnId, columnUpdate: { type: 'event-column', name: e.currentTarget.value } })}
-											onBlur={e => e.currentTarget.setSelectionRange(0, 0)}
+											defaultValue={column.name}
+											onBlur={e => {
+												updateColumn({ columnId, columnUpdate: { type: 'event-column', name: e.currentTarget.value } });
+												e.currentTarget.setSelectionRange(0, 0);
+											}}
 											style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none' }}
 										/>
 									</Inline>

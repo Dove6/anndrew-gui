@@ -345,9 +345,11 @@ const ImageCardPrimitive = (
 					<Textfield
 						appearance="subtle"
 						placeholder="Image name"
-						value={name}
-						onChange={e => updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', name: e.currentTarget.value } })}
-						onBlur={e => e.currentTarget.setSelectionRange(0, 0)}
+						defaultValue={name}
+						onBlur={e => {
+							updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', name: e.currentTarget.value } });
+							e.currentTarget.setSelectionRange(0, 0);
+						}}
 						style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none' }}
 					/>
 				</Inline>
@@ -485,9 +487,11 @@ const FrameCardPrimitive = (
 					<Textfield
 						appearance="subtle"
 						placeholder="Frame name"
-						value={name}
-						onChange={e => updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', name: e.currentTarget.value } })}
-						onBlur={e => e.currentTarget.setSelectionRange(0, 0)}
+						defaultValue={name}
+						onBlur={e => {
+							updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', name: e.currentTarget.value } });
+							e.currentTarget.setSelectionRange(0, 0);
+						}}
 						style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none' }}
 					/>
 				</Inline>
