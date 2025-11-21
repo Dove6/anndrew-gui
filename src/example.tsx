@@ -32,6 +32,7 @@ const eventScrollContainerStyles = xcss({
 	gap: 'space.200',
 	flexDirection: 'row',
 	width: '100%',
+	paddingInline: 'space.150',
 });
 
 function saveBlob(filename: string, blob: Blob) {
