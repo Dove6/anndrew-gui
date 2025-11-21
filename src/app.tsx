@@ -227,5 +227,5 @@ export const App = () => {
         </Box>
     );
 
-    return <Box xcss={xcss({ width: '100vw', height: '100vh' })}>{appInsides}</Box>;
+    return <Box xcss={xcss({ width: '100%', height: '100vh' })}>{appInsides}</Box>;
 };

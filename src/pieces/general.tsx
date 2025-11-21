@@ -21,7 +21,7 @@ const generalStyles = xcss({
 	display: 'flex',
 	flexDirection: 'row',
 	justifyContent: 'space-between',
-	marginBlock: 'space.100',
+	paddingBlock: 'space.100',
 	paddingInline: 'space.200',
 	gap: 'space.200',
 });
