@@ -25,12 +25,13 @@ export const ColumnAdder = () => {
 				hideTooltipOnClick: true,
 			}}
 			onClick={_ => {
+				const id = getNextCardId();
 				insertColumn({
 					finishIndex: getColumns().length,
 					column: {
 						type: 'event-column',
-						columnId: `column:${getNextCardId()}`,
-						name: 'EVENT NAME',
+						columnId: `column:${id}`,
+						name: `EVENT_${id}`,
 						items: [],
 						loopLength: 0,
 						opacity: 255,

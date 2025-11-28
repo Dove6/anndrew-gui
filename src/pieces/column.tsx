@@ -191,7 +191,7 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 	const [state, setState] = useState<State>(idle);
 	const [isDragging, setIsDragging] = useState<boolean>(false);
 
-	const { instanceId, registerColumn, updateColumn } = useBoardContext();
+	const { instanceId, registerColumn, updateColumn, getColumns } = useBoardContext();
 
 	useEffect(() => {
 		invariant(columnRef.current);
@@ -370,7 +370,21 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 											placeholder="Image name"
 											defaultValue={column.name}
 											onBlur={e => {
-												updateColumn({ columnId, columnUpdate: { type: 'event-column', name: e.currentTarget.value } });
+												const name = e.currentTarget.value;
+												for (const event of getColumns()) {
+													if (event.columnId === columnId || event.type === 'image-column' || (event.type === 'event-column' && event.name !== name)) {
+														continue;
+													}
+													alert('Event name must be unique!');
+													e.currentTarget.focus();
+													return;
+												}
+												if (name.indexOf(' ') >= 0) {
+													alert('Event name must not contain spaces!');
+													e.currentTarget.focus();
+													return;
+												}
+												updateColumn({ columnId, columnUpdate: { type: 'event-column', name } });
 												e.currentTarget.setSelectionRange(0, 0);
 											}}
 											style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none' }}
@@ -403,7 +417,7 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 											appearance="subtle"
 											defaultValue={column.loopLength}
 											onBlur={e => {
-												const validatedValue = Math.min(column.items.length, Math.max(Math.round(Number(e.currentTarget.value)), 0));
+												const validatedValue = Math.max(0, Math.min(column.items.length - 1, Math.round(Number(e.currentTarget.value))));
 												e.currentTarget.value = String(validatedValue);
 												updateColumn({ columnId, columnUpdate: { type: 'event-column', loopLength: validatedValue } });
 												e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
