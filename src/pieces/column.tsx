@@ -44,6 +44,7 @@ import { useBoardContext } from './board-context';
 import { Card } from './card';
 import { ColumnContext, type ColumnContextProps, useColumnContext } from './column-context';
 import Textfield from '@atlaskit/textfield';
+import { mod, parseOpacity, stringifyOpacity, toInteger } from '../sanitization';
 
 const frameColumnStyles = xcss({
 	width: '250px',
@@ -394,30 +395,31 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 										<span>Opacity:</span>
 										<Textfield
 											appearance="subtle"
-											defaultValue={column.opacity}
+											defaultValue={stringifyOpacity(column.opacity)}
 											onBlur={e => {
-												const validatedValue = Math.min(255, Math.max(Math.round(Number(e.currentTarget.value)), 0));
-												e.currentTarget.value = String(validatedValue);
+												const validatedValue = parseOpacity(e.currentTarget.value);
+												e.currentTarget.value = stringifyOpacity(validatedValue);
 												updateColumn({ columnId, columnUpdate: { type: 'event-column', opacity: validatedValue } });
 												e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
 											}}
-											style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+											style={{ paddingBlock: '1px', paddingInlineEnd: '0', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
 											ref={(ref: HTMLElement) => {
 												if (!ref) {
 													return;
 												}
-												ref.parentElement!.style.maxWidth = '2.5em';
-												ref.parentElement!.style.minWidth = '2.5em';
-												ref.parentElement!.style.width = '2.5em';
+												ref.parentElement!.style.maxWidth = '3em';
+												ref.parentElement!.style.minWidth = '3em';
+												ref.parentElement!.style.width = '3em';
 											}}
 										/>
-										<span style={{ marginRight: '5px' }}></span>
+										<span>%</span>
+										<span style={{ marginRight: '10px' }}></span>
 										<span>Loop length:</span>
 										<Textfield
 											appearance="subtle"
 											defaultValue={column.loopLength}
 											onBlur={e => {
-												const validatedValue = Math.max(0, Math.min(column.items.length - 1, Math.round(Number(e.currentTarget.value))));
+												const validatedValue = mod(toInteger(e.currentTarget.value), column.items.length);
 												e.currentTarget.value = String(validatedValue);
 												updateColumn({ columnId, columnUpdate: { type: 'event-column', loopLength: validatedValue } });
 												e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);

@@ -6,6 +6,7 @@ import DeleteIcon from '@atlaskit/icon/core/delete';
 import { useBoardContext } from './board-context';
 import Image from '@atlaskit/image';
 import Krabik from '../Krabik.png';
+import { parseOpacity, stringifyOpacity } from '../sanitization';
 
 type GeneralProps = {
 	filename: string;
@@ -149,10 +150,10 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 					<span style={{ marginRight: '0.5em' }}>Opacity:</span>
 					<Textfield
 						appearance="standard"
-						defaultValue={opacity}
+						defaultValue={stringifyOpacity(opacity)}
 						onBlur={e => {
-							const validatedValue = Math.min(255, Math.max(Math.round(Number(e.currentTarget.value)), 0));
-							e.currentTarget.value = String(validatedValue);
+							const validatedValue = parseOpacity(e.currentTarget.value);
+							e.currentTarget.value = stringifyOpacity(validatedValue);
 							updateBoard({ boardUpdate: { opacity: validatedValue } });
 							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
 						}}
@@ -161,11 +162,12 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 							if (!ref) {
 								return;
 							}
-							ref.parentElement!.style.maxWidth = '2.5em';
-							ref.parentElement!.style.minWidth = '2.5em';
-							ref.parentElement!.style.width = '2.5em';
+							ref.parentElement!.style.maxWidth = '3.5em';
+							ref.parentElement!.style.minWidth = '3.5em';
+							ref.parentElement!.style.width = '3.5em';
 						}}
 					/>
+					<span>%</span>
 				</Inline>
 			</Box>
 			<IconButton

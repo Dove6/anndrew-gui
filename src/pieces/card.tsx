@@ -48,6 +48,7 @@ import { type CardData, type ImageCard, type FrameCard, type EventColumn } from 
 import { useBoardContext } from './board-context';
 import { useColumnContext } from './column-context';
 import { Jimp } from 'jimp';
+import { parseOpacity, stringifyOpacity } from '../sanitization';
 
 type State =
 	| { type: 'idle' }
@@ -542,10 +543,10 @@ const FrameCardPrimitive = (
 					<span>Opacity:</span>
 					<Textfield
 						appearance="subtle"
-						defaultValue={opacity}
+						defaultValue={stringifyOpacity(opacity)}
 						onBlur={e => {
-							const validatedValue = Math.min(255, Math.max(Math.round(Number(e.currentTarget.value)), 0));
-							e.currentTarget.value = String(validatedValue);
+							const validatedValue = parseOpacity(e.currentTarget.value);
+							e.currentTarget.value = stringifyOpacity(validatedValue);
 							updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', opacity: validatedValue } });
 							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
 						}}
@@ -554,11 +555,12 @@ const FrameCardPrimitive = (
 							if (!ref) {
 								return;
 							}
-							ref.parentElement!.style.maxWidth = '2.5em';
-							ref.parentElement!.style.minWidth = '2.5em';
-							ref.parentElement!.style.width = '2.5em';
+							ref.parentElement!.style.maxWidth = '3em';
+							ref.parentElement!.style.minWidth = '3em';
+							ref.parentElement!.style.width = '3em';
 						}}
 					/>
+					<span>%</span>
 				</Inline>
 				<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
 					<span>SFX:</span>
