@@ -67,6 +67,7 @@ const baseStyles = xcss({
 	paddingRight: 'space.0',
 	backgroundColor: 'elevation.surface',
 	borderRadius: 'radius.large',
+	userSelect: 'none',
 	position: 'relative',
 	':hover': {
 		backgroundColor: 'elevation.surface.hovered',
@@ -79,6 +80,7 @@ const imageBaseStyles = xcss({
 	paddingRight: 'space.0',
 	backgroundColor: 'color.background.danger',
 	borderRadius: 'radius.large',
+	userSelect: 'none',
 	position: 'relative',
 	':hover': {
 		backgroundColor: 'color.background.danger.hovered',
@@ -273,7 +275,7 @@ const ImageCardPrimitive = (
 				<Box xcss={swapImageButtonStyle}>
 					<IconButton
 						icon={(iconProps) => <UploadIcon {...iconProps} size="small" />}
-						label="Replace image from disk"
+						label={<span style={{ userSelect: 'none' }}>Replace image from disk</span>}
 						isTooltipDisabled={false}
 						appearance="primary"
 						spacing="compact"

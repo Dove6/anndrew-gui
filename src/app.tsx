@@ -27,6 +27,7 @@ const boardStyles = xcss({
     alignItems: 'center',
     gap: 'space.200',
     flexDirection: 'column',
+    userSelect: 'none',
 });
 
 type State =
@@ -189,7 +190,7 @@ export const App = () => {
             <span>Upload an ANN file below</span>
             <IconButton
                 icon={UploadIcon}
-                label="Upload ANN file"
+                label={<span style={{ userSelect: 'none' }}>Upload ANN file</span>}
                 isTooltipDisabled={false}
                 appearance="default"
                 ref={buttonRef}

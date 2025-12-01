@@ -9,7 +9,7 @@ export const ColumnAdder = () => {
 	return (
 		<IconButton
 			icon={AddIcon}
-			label="Create event"
+			label={<span style={{ userSelect: 'none' }}>Create event</span>}
 			appearance="primary"
 			shape="circle"
 			isTooltipDisabled={false}

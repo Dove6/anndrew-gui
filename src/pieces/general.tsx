@@ -26,6 +26,7 @@ const generalStyles = xcss({
 	paddingBlock: 'space.100',
 	paddingInline: 'space.200',
 	gap: 'space.200',
+	userSelect: 'none',
 });
 
 const propertiesBox = xcss({
@@ -44,7 +45,7 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 		<Box xcss={generalStyles}>
 			<IconButton
 				icon={DeleteIcon}
-				label="Close without saving"
+				label={<span style={{ userSelect: 'none' }}>Close without saving</span>}
 				appearance={'danger' as any as 'default'}
 				isTooltipDisabled={false}
 				ref={(ref) => {
@@ -65,14 +66,13 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 					<span style={{ marginRight: '0.5em' }}>Filename:</span>
 					<Textfield
 						appearance="standard"
-						placeholder="Filename"
 						defaultValue={filename}
 						onKeyDown={blurOnEnterDown}
 						onBlur={e => {
 							updateBoard({ boardUpdate: { filename: e.currentTarget.value } });
 							e.currentTarget.setSelectionRange(0, 0);
 						}}
-						style={{ paddingBlock: '1px', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+						style={{ paddingBlock: '1px', textAlign: 'right', width: '100%' }}
 						ref={(ref: HTMLElement) => {
 							if (!ref) {
 								return;
@@ -88,14 +88,13 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 					<span style={{ marginRight: '0.5em' }}>Author:</span>
 					<Textfield
 						appearance="standard"
-						placeholder="Author"
 						defaultValue={author}
 						onKeyDown={blurOnEnterDown}
 						onBlur={e => {
 							updateBoard({ boardUpdate: { author: e.currentTarget.value } });
 							e.currentTarget.setSelectionRange(0, 0);
 						}}
-						style={{ paddingBlock: '1px', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+						style={{ paddingBlock: '1px', textAlign: 'right', width: '100%' }}
 						ref={(ref: HTMLElement) => {
 							if (!ref) {
 								return;
@@ -110,14 +109,13 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 					<span style={{ marginRight: '0.5em' }}>Description:</span>
 					<Textfield
 						appearance="standard"
-						placeholder="Description"
 						defaultValue={description}
 						onKeyDown={blurOnEnterDown}
 						onBlur={e => {
 							updateBoard({ boardUpdate: { description: e.currentTarget.value } });
 							e.currentTarget.setSelectionRange(0, 0);
 						}}
-						style={{ paddingBlock: '1px', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+						style={{ paddingBlock: '1px', textAlign: 'right', width: '100%' }}
 						ref={(ref: HTMLElement) => {
 							if (!ref) {
 								return;
@@ -140,7 +138,7 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 							updateBoard({ boardUpdate: { fps: validatedValue } });
 							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
 						}}
-						style={{ paddingBlock: '1px', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+						style={{ paddingBlock: '1px', textAlign: 'right', width: '100%' }}
 						ref={(ref: HTMLElement) => {
 							if (!ref) {
 								return;
@@ -163,7 +161,7 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 							updateBoard({ boardUpdate: { opacity: validatedValue } });
 							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
 						}}
-						style={{ paddingBlock: '1px', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+						style={{ paddingBlock: '1px', textAlign: 'right', width: '100%' }}
 						ref={(ref: HTMLElement) => {
 							if (!ref) {
 								return;
@@ -180,7 +178,7 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 				icon={_ => (
 					<Image src={Krabik} alt="Anndrew logo" style={{ maxHeight: '40px' }} />
 				)}
-				label="Download edited ANN"
+				label={<span style={{ userSelect: 'none' }}>Download edited ANN</span>}
 				appearance="primary"
 				isTooltipDisabled={false}
 				ref={(ref) => {
