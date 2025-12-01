@@ -1,4 +1,4 @@
-import {
+import React, {
 	forwardRef,
 	Fragment,
 	type Ref,
@@ -49,7 +49,7 @@ import { useBoardContext } from './board-context';
 import { useColumnContext } from './column-context';
 import { Jimp } from 'jimp';
 import { parseOpacity, stringifyOpacity, toInteger } from '../sanitization';
-import { blurOnEnterDown } from '../eventHandling';
+import { allowTextSelection, blurOnEnterDown, disallowTextSelection } from '../eventHandling';
 
 type State =
 	| { type: 'idle' }
@@ -120,7 +120,7 @@ type ImageCardPrimitiveProps = {
 	item: ImageCard;
 	order: number;
 	state: State;
-	cardDivRef: Ref<HTMLDivElement>;
+	cardDivRef: React.MutableRefObject<HTMLDivElement>;
 	actionMenuTriggerRef?: Ref<HTMLButtonElement>;
 };
 
@@ -129,7 +129,7 @@ type FrameCardPrimitiveProps = {
 	item: FrameCard;
 	order: number;
 	state: State;
-	cardDivRef: Ref<HTMLDivElement>;
+	cardDivRef: React.MutableRefObject<HTMLDivElement>;
 	actionMenuTriggerRef?: Ref<HTMLButtonElement>;
 };
 
@@ -230,11 +230,12 @@ function LazyDropdownItems({ cardId }: { cardId: string }) {
 }
 
 const CardPrimitive = forwardRef<HTMLDivElement, CardPrimitiveProps>(function CardPrimitive({ closestEdge, item, order, state, actionMenuTriggerRef }, ref) {
+	const cardDivRef = ref as React.MutableRefObject<HTMLDivElement>;
 	switch (item.type) {
 		case 'image-card':
-			return <ImageCardPrimitive closestEdge={closestEdge} item={item} order={order} state={state} actionMenuTriggerRef={actionMenuTriggerRef} cardDivRef={ref} />;
+			return <ImageCardPrimitive closestEdge={closestEdge} item={item} order={order} state={state} actionMenuTriggerRef={actionMenuTriggerRef} cardDivRef={cardDivRef} />;
 		default:
-			return <FrameCardPrimitive closestEdge={closestEdge} item={item} order={order} state={state} actionMenuTriggerRef={actionMenuTriggerRef} cardDivRef={ref} />;
+			return <FrameCardPrimitive closestEdge={closestEdge} item={item} order={order} state={state} actionMenuTriggerRef={actionMenuTriggerRef} cardDivRef={cardDivRef} />;
 	}
 });
 
@@ -349,11 +350,13 @@ const ImageCardPrimitive = (
 						placeholder="Image name"
 						defaultValue={name}
 						onKeyDown={blurOnEnterDown}
+						onMouseDown={allowTextSelection(cardDivRef)}
+						onMouseLeave={disallowTextSelection(cardDivRef)}
 						onBlur={e => {
 							updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', name: e.currentTarget.value } });
 							e.currentTarget.setSelectionRange(0, 0);
 						}}
-						style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none' }}
+						style={{ paddingBlock: '1px', fontSize: 'small' }}
 					/>
 				</Inline>
 				<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
@@ -362,13 +365,15 @@ const ImageCardPrimitive = (
 						appearance="subtle"
 						defaultValue={offset.x}
 						onKeyDown={blurOnEnterDown}
+						onMouseDown={allowTextSelection(cardDivRef)}
+						onMouseLeave={disallowTextSelection(cardDivRef)}
 						onBlur={e => {
 							const validatedValue = toInteger(e.currentTarget.value);
 							e.currentTarget.value = String(validatedValue);
 							updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', offsetX: validatedValue } });
 							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
 						}}
-						style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+						style={{ paddingBlock: '1px', fontSize: 'small', textAlign: 'right', width: '100%' }}
 						ref={(ref: HTMLElement) => {
 							if (!ref) {
 								return;
@@ -383,13 +388,15 @@ const ImageCardPrimitive = (
 						appearance="subtle"
 						defaultValue={offset.y}
 						onKeyDown={blurOnEnterDown}
+						onMouseDown={allowTextSelection(cardDivRef)}
+						onMouseLeave={disallowTextSelection(cardDivRef)}
 						onBlur={e => {
 							const validatedValue = toInteger(e.currentTarget.value);
 							e.currentTarget.value = String(validatedValue);
 							updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', offsetY: validatedValue } });
 							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
 						}}
-						style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+						style={{ paddingBlock: '1px', fontSize: 'small', textAlign: 'right', width: '100%' }}
 						ref={(ref: HTMLElement) => {
 							if (!ref) {
 								return;
@@ -494,11 +501,13 @@ const FrameCardPrimitive = (
 						placeholder="Frame name"
 						defaultValue={name}
 						onKeyDown={blurOnEnterDown}
+						onMouseDown={allowTextSelection(cardDivRef)}
+						onMouseLeave={disallowTextSelection(cardDivRef)}
 						onBlur={e => {
 							updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', name: e.currentTarget.value } });
 							e.currentTarget.setSelectionRange(0, 0);
 						}}
-						style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none' }}
+						style={{ paddingBlock: '1px', fontSize: 'small' }}
 					/>
 				</Inline>
 				<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
@@ -507,13 +516,15 @@ const FrameCardPrimitive = (
 						appearance="subtle"
 						defaultValue={offset.x}
 						onKeyDown={blurOnEnterDown}
+						onMouseDown={allowTextSelection(cardDivRef)}
+						onMouseLeave={disallowTextSelection(cardDivRef)}
 						onBlur={e => {
 							const validatedValue = toInteger(e.currentTarget.value);
 							e.currentTarget.value = String(validatedValue);
 							updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', offsetX: validatedValue } });
 							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
 						}}
-						style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+						style={{ paddingBlock: '1px', fontSize: 'small', textAlign: 'right', width: '100%' }}
 						ref={(ref: HTMLElement) => {
 							if (!ref) {
 								return;
@@ -528,13 +539,15 @@ const FrameCardPrimitive = (
 						appearance="subtle"
 						defaultValue={offset.y}
 						onKeyDown={blurOnEnterDown}
+						onMouseDown={allowTextSelection(cardDivRef)}
+						onMouseLeave={disallowTextSelection(cardDivRef)}
 						onBlur={e => {
 							const validatedValue = toInteger(e.currentTarget.value);
 							e.currentTarget.value = String(validatedValue);
 							updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', offsetY: validatedValue } });
 							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
 						}}
-						style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+						style={{ paddingBlock: '1px', fontSize: 'small', textAlign: 'right', width: '100%' }}
 						ref={(ref: HTMLElement) => {
 							if (!ref) {
 								return;
@@ -552,13 +565,15 @@ const FrameCardPrimitive = (
 						appearance="subtle"
 						defaultValue={stringifyOpacity(opacity)}
 						onKeyDown={blurOnEnterDown}
+						onMouseDown={allowTextSelection(cardDivRef)}
+						onMouseLeave={disallowTextSelection(cardDivRef)}
 						onBlur={e => {
 							const validatedValue = parseOpacity(e.currentTarget.value);
 							e.currentTarget.value = stringifyOpacity(validatedValue);
 							updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', opacity: validatedValue } });
 							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
 						}}
-						style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+						style={{ paddingBlock: '1px', fontSize: 'small', textAlign: 'right', width: '100%' }}
 						ref={(ref: HTMLElement) => {
 							if (!ref) {
 								return;
@@ -577,13 +592,15 @@ const FrameCardPrimitive = (
 						placeholder="Randomly played SFX list (comma-separated)"
 						defaultValue={sfx.join(', ')}
 						onKeyDown={blurOnEnterDown}
+						onMouseDown={allowTextSelection(cardDivRef)}
+						onMouseLeave={disallowTextSelection(cardDivRef)}
 						onBlur={e => {
 							const validatedValue = e.currentTarget.value.split(',').map(s => s.trim());
 							e.currentTarget.value = validatedValue.join(', ');
 							updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', sfx: validatedValue } });
 							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
 						}}
-						style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none' }}
+						style={{ paddingBlock: '1px', fontSize: 'small' }}
 					/>
 				</Inline>
 			</Stack>

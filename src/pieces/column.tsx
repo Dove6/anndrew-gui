@@ -45,7 +45,7 @@ import { Card } from './card';
 import { ColumnContext, type ColumnContextProps, useColumnContext } from './column-context';
 import Textfield from '@atlaskit/textfield';
 import { mod, parseOpacity, stringifyOpacity, toInteger } from '../sanitization';
-import { blurOnEnterDown } from '../eventHandling';
+import { allowTextSelection, blurOnEnterDown, disallowTextSelection } from '../eventHandling';
 
 const frameColumnStyles = xcss({
 	width: '250px',
@@ -372,6 +372,8 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 											placeholder="Image name"
 											defaultValue={column.name}
 											onKeyDown={blurOnEnterDown}
+											onMouseDown={allowTextSelection(columnRef)}
+											onMouseLeave={disallowTextSelection(columnRef)}
 											onBlur={e => {
 												const name = e.currentTarget.value;
 												for (const event of getColumns()) {
@@ -390,7 +392,7 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 												updateColumn({ columnId, columnUpdate: { type: 'event-column', name } });
 												e.currentTarget.setSelectionRange(0, 0);
 											}}
-											style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none' }}
+											style={{ paddingBlock: '1px', fontSize: 'small' }}
 										/>
 									</Inline>
 									<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
@@ -399,13 +401,15 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 											appearance="subtle"
 											defaultValue={stringifyOpacity(column.opacity)}
 											onKeyDown={blurOnEnterDown}
+											onMouseDown={allowTextSelection(columnRef)}
+											onMouseLeave={disallowTextSelection(columnRef)}
 											onBlur={e => {
 												const validatedValue = parseOpacity(e.currentTarget.value);
 												e.currentTarget.value = stringifyOpacity(validatedValue);
 												updateColumn({ columnId, columnUpdate: { type: 'event-column', opacity: validatedValue } });
 												e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
 											}}
-											style={{ paddingBlock: '1px', paddingInlineEnd: '0', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+											style={{ paddingBlock: '1px', paddingInlineEnd: '0', fontSize: 'small', textAlign: 'right', width: '100%' }}
 											ref={(ref: HTMLElement) => {
 												if (!ref) {
 													return;
@@ -422,13 +426,15 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 											appearance="subtle"
 											defaultValue={column.loopLength}
 											onKeyDown={blurOnEnterDown}
+											onMouseDown={allowTextSelection(columnRef)}
+											onMouseLeave={disallowTextSelection(columnRef)}
 											onBlur={e => {
 												const validatedValue = mod(toInteger(e.currentTarget.value), column.items.length);
 												e.currentTarget.value = String(validatedValue);
 												updateColumn({ columnId, columnUpdate: { type: 'event-column', loopLength: validatedValue } });
 												e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
 											}}
-											style={{ paddingBlock: '1px', fontSize: 'small', pointerEvents: 'none', textAlign: 'right', width: '100%' }}
+											style={{ paddingBlock: '1px', fontSize: 'small', textAlign: 'right', width: '100%' }}
 											ref={(ref: HTMLElement) => {
 												if (!ref) {
 													return;
