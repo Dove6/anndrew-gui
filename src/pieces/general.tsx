@@ -6,7 +6,8 @@ import DeleteIcon from '@atlaskit/icon/core/delete';
 import { useBoardContext } from './board-context';
 import Image from '@atlaskit/image';
 import Krabik from '../Krabik.png';
-import { parseOpacity, stringifyOpacity } from '../sanitization';
+import { parseOpacity, stringifyOpacity, toInteger } from '../sanitization';
+import { blurOnEnterDown } from '../eventHandling';
 
 type GeneralProps = {
 	filename: string;
@@ -66,6 +67,7 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 						appearance="standard"
 						placeholder="Filename"
 						defaultValue={filename}
+						onKeyDown={blurOnEnterDown}
 						onBlur={e => {
 							updateBoard({ boardUpdate: { filename: e.currentTarget.value } });
 							e.currentTarget.setSelectionRange(0, 0);
@@ -88,6 +90,7 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 						appearance="standard"
 						placeholder="Author"
 						defaultValue={author}
+						onKeyDown={blurOnEnterDown}
 						onBlur={e => {
 							updateBoard({ boardUpdate: { author: e.currentTarget.value } });
 							e.currentTarget.setSelectionRange(0, 0);
@@ -109,6 +112,7 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 						appearance="standard"
 						placeholder="Description"
 						defaultValue={description}
+						onKeyDown={blurOnEnterDown}
 						onBlur={e => {
 							updateBoard({ boardUpdate: { description: e.currentTarget.value } });
 							e.currentTarget.setSelectionRange(0, 0);
@@ -129,8 +133,9 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 					<Textfield
 						appearance="standard"
 						defaultValue={fps}
+						onKeyDown={blurOnEnterDown}
 						onBlur={e => {
-							const validatedValue = Math.round(Number(e.currentTarget.value));
+							const validatedValue = Math.max(1, toInteger(e.currentTarget.value));
 							e.currentTarget.value = String(validatedValue);
 							updateBoard({ boardUpdate: { fps: validatedValue } });
 							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
@@ -151,6 +156,7 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 					<Textfield
 						appearance="standard"
 						defaultValue={stringifyOpacity(opacity)}
+						onKeyDown={blurOnEnterDown}
 						onBlur={e => {
 							const validatedValue = parseOpacity(e.currentTarget.value);
 							e.currentTarget.value = stringifyOpacity(validatedValue);

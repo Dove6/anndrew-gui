@@ -48,7 +48,8 @@ import { type CardData, type ImageCard, type FrameCard, type EventColumn } from 
 import { useBoardContext } from './board-context';
 import { useColumnContext } from './column-context';
 import { Jimp } from 'jimp';
-import { parseOpacity, stringifyOpacity } from '../sanitization';
+import { parseOpacity, stringifyOpacity, toInteger } from '../sanitization';
+import { blurOnEnterDown } from '../eventHandling';
 
 type State =
 	| { type: 'idle' }
@@ -347,6 +348,7 @@ const ImageCardPrimitive = (
 						appearance="subtle"
 						placeholder="Image name"
 						defaultValue={name}
+						onKeyDown={blurOnEnterDown}
 						onBlur={e => {
 							updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', name: e.currentTarget.value } });
 							e.currentTarget.setSelectionRange(0, 0);
@@ -359,8 +361,9 @@ const ImageCardPrimitive = (
 					<Textfield
 						appearance="subtle"
 						defaultValue={offset.x}
+						onKeyDown={blurOnEnterDown}
 						onBlur={e => {
-							const validatedValue = Math.round(Number(e.currentTarget.value));
+							const validatedValue = toInteger(e.currentTarget.value);
 							e.currentTarget.value = String(validatedValue);
 							updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', offsetX: validatedValue } });
 							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
@@ -379,8 +382,9 @@ const ImageCardPrimitive = (
 					<Textfield
 						appearance="subtle"
 						defaultValue={offset.y}
+						onKeyDown={blurOnEnterDown}
 						onBlur={e => {
-							const validatedValue = Math.round(Number(e.currentTarget.value));
+							const validatedValue = toInteger(e.currentTarget.value);
 							e.currentTarget.value = String(validatedValue);
 							updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', offsetY: validatedValue } });
 							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
@@ -489,6 +493,7 @@ const FrameCardPrimitive = (
 						appearance="subtle"
 						placeholder="Frame name"
 						defaultValue={name}
+						onKeyDown={blurOnEnterDown}
 						onBlur={e => {
 							updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', name: e.currentTarget.value } });
 							e.currentTarget.setSelectionRange(0, 0);
@@ -501,8 +506,9 @@ const FrameCardPrimitive = (
 					<Textfield
 						appearance="subtle"
 						defaultValue={offset.x}
+						onKeyDown={blurOnEnterDown}
 						onBlur={e => {
-							const validatedValue = Math.round(Number(e.currentTarget.value));
+							const validatedValue = toInteger(e.currentTarget.value);
 							e.currentTarget.value = String(validatedValue);
 							updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', offsetX: validatedValue } });
 							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
@@ -521,8 +527,9 @@ const FrameCardPrimitive = (
 					<Textfield
 						appearance="subtle"
 						defaultValue={offset.y}
+						onKeyDown={blurOnEnterDown}
 						onBlur={e => {
-							const validatedValue = Math.round(Number(e.currentTarget.value));
+							const validatedValue = toInteger(e.currentTarget.value);
 							e.currentTarget.value = String(validatedValue);
 							updateCard({ columnId, cardId, cardUpdate: { type: 'frame-card', offsetY: validatedValue } });
 							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
@@ -544,6 +551,7 @@ const FrameCardPrimitive = (
 					<Textfield
 						appearance="subtle"
 						defaultValue={stringifyOpacity(opacity)}
+						onKeyDown={blurOnEnterDown}
 						onBlur={e => {
 							const validatedValue = parseOpacity(e.currentTarget.value);
 							e.currentTarget.value = stringifyOpacity(validatedValue);
@@ -568,6 +576,7 @@ const FrameCardPrimitive = (
 						appearance="subtle"
 						placeholder="Randomly played SFX list (comma-separated)"
 						defaultValue={sfx.join(', ')}
+						onKeyDown={blurOnEnterDown}
 						onBlur={e => {
 							const validatedValue = e.currentTarget.value.split(',').map(s => s.trim());
 							e.currentTarget.value = validatedValue.join(', ');

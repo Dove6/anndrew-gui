@@ -45,6 +45,7 @@ import { Card } from './card';
 import { ColumnContext, type ColumnContextProps, useColumnContext } from './column-context';
 import Textfield from '@atlaskit/textfield';
 import { mod, parseOpacity, stringifyOpacity, toInteger } from '../sanitization';
+import { blurOnEnterDown } from '../eventHandling';
 
 const frameColumnStyles = xcss({
 	width: '250px',
@@ -370,6 +371,7 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 											appearance="subtle"
 											placeholder="Image name"
 											defaultValue={column.name}
+											onKeyDown={blurOnEnterDown}
 											onBlur={e => {
 												const name = e.currentTarget.value;
 												for (const event of getColumns()) {
@@ -396,6 +398,7 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 										<Textfield
 											appearance="subtle"
 											defaultValue={stringifyOpacity(column.opacity)}
+											onKeyDown={blurOnEnterDown}
 											onBlur={e => {
 												const validatedValue = parseOpacity(e.currentTarget.value);
 												e.currentTarget.value = stringifyOpacity(validatedValue);
@@ -418,6 +421,7 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 										<Textfield
 											appearance="subtle"
 											defaultValue={column.loopLength}
+											onKeyDown={blurOnEnterDown}
 											onBlur={e => {
 												const validatedValue = mod(toInteger(e.currentTarget.value), column.items.length);
 												e.currentTarget.value = String(validatedValue);
