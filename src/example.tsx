@@ -24,6 +24,7 @@ import { ColumnAdder } from './pieces/column-adder';
 import { Box, xcss } from '@atlaskit/primitives';
 import { dumpAnn, type ANN } from './fileFormats/ann';
 import { Jimp } from "jimp";
+import { readImageFile } from './event-handling';
 
 const eventScrollContainerStyles = xcss({
 	maxWidth: '100%',
@@ -744,22 +745,13 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 
 					const files = getFiles({ source });
 					files.forEach(async (file) => {
-						if (file == null) {
-							return;
-						}
-						if (!file.type.startsWith('image/')) {
-							return;
-						}
-
+						const contentUrl = await readImageFile(file);
 						const cardId = `id:${getNextCardId()}`;
-						const buffer = await file.arrayBuffer();
-						const image = await Jimp.read(buffer);
-						const contentUrl = await image.getBase64('image/png');
 						insertCard({
 							item: {
 								type: 'image-card',
 								cardId,
-								name: file.name,
+								name: file.name.replace(/\.[a-z0-9]+$/i, ''),
 								contentUrl,
 								offset: { x: 0, y: 0 },
 							},
@@ -902,6 +894,7 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 
 	const contextValue: BoardContextValue = useMemo(() => {
 		return {
+			getFilename: () => data.filename,
 			getColumns,
 			reorderColumn,
 			insertColumn,

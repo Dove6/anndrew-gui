@@ -7,6 +7,8 @@ import type { CleanupFn } from '@atlaskit/pragmatic-drag-and-drop/types';
 import type { BoardUpdate, CardData, CardUpdate, ColumnData, ColumnUpdate } from '../models';
 
 export type BoardContextValue = {
+	getFilename: () => string;
+
 	getColumns: () => ColumnData[];
 
 	reorderColumn: (args: { startIndex: number; finishIndex: number }) => void;

@@ -45,7 +45,7 @@ import { Card } from './card';
 import { ColumnContext, type ColumnContextProps, useColumnContext } from './column-context';
 import Textfield from '@atlaskit/textfield';
 import { mod, parseOpacity, stringifyOpacity, toInteger } from '../sanitization';
-import { allowTextSelection, blurOnEnterDown, disallowTextSelection } from '../eventHandling';
+import { allowTextSelection, blurOnEnterDown, disallowTextSelection } from '../event-handling';
 
 const frameColumnStyles = xcss({
 	width: '250px',

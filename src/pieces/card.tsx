@@ -14,6 +14,7 @@ import invariant from 'tiny-invariant';
 import Avatar from '@atlaskit/avatar';
 import Textfield from '@atlaskit/textfield';
 import UploadIcon from '@atlaskit/icon/core/upload';
+import DownloadIcon from '@atlaskit/icon/core/download';
 import LinkExternalIcon from '@atlaskit/icon/core/link-external';
 import { IconButton } from '@atlaskit/button/new';
 import DropdownMenu, { DropdownItem, DropdownItemGroup } from '@atlaskit/dropdown-menu';
@@ -47,9 +48,15 @@ import { type CardData, type ImageCard, type FrameCard, type EventColumn } from 
 
 import { useBoardContext } from './board-context';
 import { useColumnContext } from './column-context';
-import { Jimp } from 'jimp';
 import { parseOpacity, stringifyOpacity, toInteger } from '../sanitization';
-import { allowTextSelection, blurOnEnterDown, disallowTextSelection } from '../eventHandling';
+import { allowTextSelection, blurOnEnterDown, disallowTextSelection, readImageFile } from '../event-handling';
+
+function saveContentUrl(filename: string, contentUrl: string) {
+	var link = document.createElement('a');
+	link.href = contentUrl;
+	link.download = filename;
+	link.click();
+};
 
 type State =
 	| { type: 'idle' }
@@ -102,11 +109,12 @@ const stateStyles: {
 	preview: undefined,
 };
 
-const swapImageButtonStyle = xcss({
+const imageButtonsStyle = xcss({
 	pointerEvents: 'all',
 	position: 'absolute',
 	top: 'space.050',
 	right: 'space.050',
+	opacity: '90%',
 });
 
 type CardPrimitiveProps = {
@@ -245,10 +253,13 @@ const ImageCardPrimitive = (
 	{ closestEdge, item, order, state, actionMenuTriggerRef, cardDivRef }: ImageCardPrimitiveProps,
 ) => {
 	const { cardId, name, contentUrl, offset } = item;
-	const title = `Image ${order}: ${name}`;
-	const { updateCard } = useBoardContext();
+	const title = name.trim().length > 0 ? `Image ${order}: ${name}` : `Image ${order}`;
+	const { updateCard, getFilename } = useBoardContext();
 	const { columnId } = useColumnContext();
 	const uploaderRef = useRef<HTMLInputElement | null>(null);
+
+	const exportedFilename = (name.trim().length > 0 ? name : `${getFilename()}_image-${order}`) + '.png';
+
 	return (
 		<Grid
 			ref={cardDivRef}
@@ -272,12 +283,29 @@ const ImageCardPrimitive = (
 						ref.style.borderWidth = '1px';
 					}}
 				/>
-				<Box xcss={swapImageButtonStyle}>
+				<Box xcss={imageButtonsStyle}>
+					<IconButton
+						icon={(iconProps) => <DownloadIcon {...iconProps} size="small" />}
+						label={<span style={{ userSelect: 'none' }}>Export image to disk</span>}
+						isTooltipDisabled={false}
+						appearance="primary"
+						spacing="compact"
+						onClick={_ => saveContentUrl(exportedFilename, contentUrl)}
+						ref={ref => {
+							if (!ref) {
+								return;
+							}
+							ref.style.borderColor = 'white';
+							ref.style.borderStyle = 'solid';
+							ref.style.borderWidth = '1px';
+						}}
+					/>
+					<span style={{ marginInlineEnd: '1px' }}></span>
 					<IconButton
 						icon={(iconProps) => <UploadIcon {...iconProps} size="small" />}
 						label={<span style={{ userSelect: 'none' }}>Replace image from disk</span>}
 						isTooltipDisabled={false}
-						appearance="primary"
+						appearance="discovery"
 						spacing="compact"
 						onClick={_ => {
 							const input = uploaderRef.current;
@@ -291,21 +319,18 @@ const ImageCardPrimitive = (
 							input.onchange = async () => {
 								input.oncancel = null;
 								input.onchange = null;
-								if (input.files?.length !== 1) {
-									return;
-								}
-								const file = input.files[0];
-								if (!file.type.startsWith('image/')) {
-									console.error('Not an image');
-									return;
-								}
-
-								const buffer = await file.arrayBuffer();
-								const image = await Jimp.read(buffer);
-								const contentUrl = await image.getBase64('image/png');
+								const contentUrl = await readImageFile(input.files?.[0]);
 								updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', contentUrl } });
 							};
 							input.click();
+						}}
+						ref={ref => {
+							if (!ref) {
+								return;
+							}
+							ref.style.borderColor = 'white';
+							ref.style.borderStyle = 'solid';
+							ref.style.borderWidth = '1px';
 						}}
 					/>
 					<input type="file" ref={uploaderRef} style={{ display: 'none' }} />
@@ -422,7 +447,7 @@ const FrameCardPrimitive = (
 	const { cardId, name, imageRef, offset, sfx, opacity } = item;
 	const { getColumns, flashCard, updateCard } = useBoardContext();
 	const { columnId } = useColumnContext();
-	const title = `Frame ${order}: ${name}`;
+	const title = name.trim().length > 0 ? `Frame ${order}: ${name}` : `Frame ${order}`;
 	const imageRefColumn = getColumns().find(c => c.items.findIndex(i => i.cardId == imageRef.cardId) >= 0);
 	invariant(imageRefColumn);
 	const refImageTitle = `Image ${imageRefColumn.items.findIndex(i => i.cardId == imageRef.cardId)}: ${imageRef.name}`;

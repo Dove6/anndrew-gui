@@ -7,7 +7,7 @@ import { useBoardContext } from './board-context';
 import Image from '@atlaskit/image';
 import Krabik from '../Krabik.png';
 import { parseOpacity, stringifyOpacity, toInteger } from '../sanitization';
-import { blurOnEnterDown } from '../eventHandling';
+import { blurOnEnterDown } from '../event-handling';
 
 type GeneralProps = {
 	filename: string;
@@ -15,8 +15,8 @@ type GeneralProps = {
 	description: string;
 	fps: number;
 	opacity: number;
-	onClear: () => void,
-	onSave: () => void,
+	onClear: () => void;
+	onSave: () => void;
 };
 
 const generalStyles = xcss({
