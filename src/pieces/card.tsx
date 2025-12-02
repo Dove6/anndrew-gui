@@ -355,7 +355,7 @@ const ImageCardPrimitive = (
 							ref.style.borderWidth = '1px';
 						}}
 					/>
-					<input type="file" ref={uploaderRef} style={{ display: 'none' }} />
+					<input type="file" accept="image/jpeg,image/png,image/bmp,image/tiff,image/gif,.img" ref={uploaderRef} style={{ display: 'none' }} />
 				</Box>
 			</Box>
 

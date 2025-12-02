@@ -46,6 +46,7 @@ import { ColumnContext, type ColumnContextProps, useColumnContext } from './colu
 import Textfield from '@atlaskit/textfield';
 import { mod, parseOpacity, stringifyOpacity, toInteger } from '../sanitization';
 import { allowTextSelection, blurOnEnterDown, disallowTextSelection } from '../event-handling';
+import { ImageAdder } from './image-adder';
 
 const frameColumnStyles = xcss({
 	width: '250px',
@@ -334,7 +335,7 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 		<br/>
 		<span>
 			To insert an image, drag an image file (in JPEG, PNG, BMP, TIFF, GIF, or IMG format) from your disk
-			and drop it here, inside the Images column.
+			and drop it here, inside the Images column. You can also click the Upload file button below.
 		</span>
 	</> : <>
 		<span style={{ fontWeight: 'bold' }}>No frames here!</span>
@@ -474,6 +475,7 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 								))}
 							</Stack>
 						</Box>
+						{isImageColumn ? <div style={{ zIndex: '2', marginBlockStart: '0.5em' }}><ImageAdder columnId={columnId} /></div> : <></>}
 					</Stack>
 				</Stack>
 				{state.type === 'is-column-over' && state.closestEdge && (

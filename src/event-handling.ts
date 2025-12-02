@@ -43,10 +43,13 @@ export const readImageFile = async (file?: File) => {
         throw new Error('Dropped file is not an image, ' + ((file.type ?? '').trim().length > 0 ? `detected MIME type: ${file.type}` : 'no detected MIME type'));
     }
 
+    const name = file.name.replace(/\.[a-z0-9]+$/i, '');
+
     const buffer = await file.arrayBuffer();
     if (file.type.startsWith('image/')) {
         const image = await Jimp.read(buffer);
         return {
+            name,
             contentUrl: await image.getBase64('image/png'),
             offset: {
                 x: 0,
@@ -62,6 +65,7 @@ export const readImageFile = async (file?: File) => {
         data: new Uint8Array(loadedImg.bytes),
     });
     return {
+        name,
         contentUrl: await image.getBase64('image/png'),
         offset: {
             x: loadedImg.header.positionX,

@@ -216,7 +216,7 @@ export const App = () => {
                     input.click();
                 }}
             />
-            <input type="file" ref={uploaderRef} style={{ display: 'none' }} />
+            <input type="file" accept=".ann" ref={uploaderRef} style={{ display: 'none' }} />
             <div style={{ marginBlock: '0.5em' }}></div>
             <Button
                 iconBefore={PremiumIcon}
