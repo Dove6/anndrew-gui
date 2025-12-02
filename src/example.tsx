@@ -15,14 +15,14 @@ import { containsFiles, getFiles } from '@atlaskit/pragmatic-drag-and-drop/exter
 import { preventUnhandled } from '@atlaskit/pragmatic-drag-and-drop/prevent-unhandled';
 import { autoScrollForElements } from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element';
 
-import { type ColumnData, type CardData, type FrameCard, type BoardState, type Trigger, type Outcome, getFrame, getNextCardId, type CardUpdate, type ColumnUpdate, type BoardUpdate } from './models';
+import { type ColumnData, type CardData, type FrameCard, type BoardState, type Trigger, type Outcome, getFrame, getNextCardId, type CardUpdate, type ColumnUpdate, type BoardUpdate, type ImageColumn, type EventColumn } from './models';
 import Board from './pieces/board';
 import { BoardContext, type BoardContextValue } from './pieces/board-context';
 import { Column } from './pieces/column';
 import { createRegistry } from './pieces/registry';
 import General from './pieces/general';
 import { ColumnAdder } from './pieces/column-adder';
-import { Box, xcss } from '@atlaskit/primitives';
+import { Box, Stack, xcss } from '@atlaskit/primitives';
 import { dumpAnn, type ANN } from './fileFormats/ann';
 import { Jimp } from "jimp";
 import { readImageFile } from './event-handling';
@@ -973,17 +973,27 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 		saveBlob(data.filename + '.ann', annData);
 	}, [data]);
 
+	const imageColumns = data.orderedColumnIds.map(columnId => data.columnMap[columnId]).filter(({ type }) => type === 'image-column') as ImageColumn[];
+	const eventColumns = data.orderedColumnIds.map(columnId => data.columnMap[columnId]).filter(({ type }) => type === 'event-column') as EventColumn[];
+
 	return (
 		<BoardContext.Provider value={contextValue}>
 			<General {...data} onClear={onClear} onSave={onSave} />
 			<hr style={{ color: 'gray' }} />
 			<Board>
-				{data.orderedColumnIds.filter(columnId => data.columnMap[columnId].type == 'image-column').map((columnId, order) => {
-					return <Column column={data.columnMap[columnId]} order={order} key={columnId} />;
+				{imageColumns.map((column, order) => {
+					return <Column column={column} order={order} key={column.columnId} />;
 				})}
 				<Box xcss={eventScrollContainerStyles} ref={eventScrollableRef}>
-					{data.orderedColumnIds.filter(columnId => data.columnMap[columnId].type == 'event-column').map((columnId, order) => {
-						return <Column column={data.columnMap[columnId]} order={order} key={columnId} />;
+					<Stack alignBlock="center" xcss={xcss({ position: 'relative', width: 'inherit', padding: 'space.200', textAlign: 'center', opacity: '75%', fontSize: '0.9em', display: eventColumns.length > 0 ? 'none' : undefined })}>
+						<span style={{ fontWeight: 'bold' }}>No events here!</span>
+						<br />
+						<span>
+							To add an event, click the Create event button on the right.
+						</span>
+					</Stack>
+					{eventColumns.map((column, order) => {
+						return <Column column={column} order={order} key={column.columnId} />;
 					})}
 				</Box>
 				<ColumnAdder />

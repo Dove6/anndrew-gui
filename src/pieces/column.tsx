@@ -329,6 +329,22 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 	const stateStyles = isDraggable ? draggableStateStyles : nonDraggableStateStyles;
 	const title = isImageColumn ? 'Images' : `Event ${order}: ${column.name}`;
 
+	const helpText = isImageColumn ? <>
+		<span style={{ fontWeight: 'bold' }}>No images here!</span>
+		<br/>
+		<span>
+			To insert an image, drag an image file (in JPEG, PNG, BMP, TIFF, GIF, or IMG format) from your disk
+			and drop it here, inside the Images column.
+		</span>
+	</> : <>
+		<span style={{ fontWeight: 'bold' }}>No frames here!</span>
+		<br/>
+		<span>
+			To insert a frame, drag an image card from the Images column
+			and drop it here, inside the Event column.
+		</span>
+	</>;
+
 	return (
 		<ColumnContext.Provider value={contextValue}>
 			<Flex
@@ -343,7 +359,7 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 				*/}
 				<Stack xcss={stackStyles} ref={columnInnerRef}>
 					<Stack xcss={[stackStyles, isDragging ? isDraggingStyles : undefined]}>
-						<Stack ref={headerRef}>
+						<Stack ref={headerRef} xcss={xcss({ zIndex: '2' as '1' })}>
 							<Inline
 								space="space.100"
 								xcss={columnHeaderStyles}
@@ -448,6 +464,9 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 								</Stack>}
 						</Stack>
 						<hr style={{ width: '93%', color: 'lightgray' }} />
+						<Stack alignBlock="center" xcss={xcss({ zIndex: '1', position: 'absolute', height: '100%', padding: 'space.200', textAlign: 'center', opacity: '75%', fontSize: '0.9em', display: column.items.length > 0 ? 'none' : undefined })}>
+							{helpText}
+						</Stack>
 						<Box xcss={scrollContainerStyles} ref={scrollableRef}>
 							<Stack xcss={cardListStyles} space="space.100">
 								{column.items.map((item, order) => (
