@@ -341,8 +341,8 @@ const ImageCardPrimitive = (
 							input.onchange = async () => {
 								input.oncancel = null;
 								input.onchange = null;
-								const contentUrl = await readImageFile(input.files?.[0]);
-								updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', contentUrl } });
+								const { contentUrl, offset: { x: offsetX, y: offsetY } } = await readImageFile(input.files?.[0]);
+								updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', contentUrl, offsetX, offsetY } });
 							};
 							input.click();
 						}}

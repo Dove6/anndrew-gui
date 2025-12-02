@@ -1,5 +1,6 @@
 import { Jimp } from 'jimp';
 import React from 'react';
+import { loadImage as loadImg } from './fileFormats/img';
 
 
 export const blurOnEnterDown: React.KeyboardEventHandler<HTMLInputElement> = e => {
@@ -38,11 +39,33 @@ export const readImageFile = async (file?: File) => {
     if (!file) {
         throw new Error('Dropped no file');
     }
-    if (!file.type.startsWith('image/')) {
-        throw new Error('Dropped file is not an image');
+    if (!(file.type.startsWith('image/') || await file.slice(0, 4).text() === 'PIK\0')) {
+        throw new Error('Dropped file is not an image, ' + ((file.type ?? '').trim().length > 0 ? `detected MIME type: ${file.type}` : 'no detected MIME type'));
     }
 
     const buffer = await file.arrayBuffer();
-    const image = await Jimp.read(buffer);
-    return await image.getBase64('image/png');
+    if (file.type.startsWith('image/')) {
+        const image = await Jimp.read(buffer);
+        return {
+            contentUrl: await image.getBase64('image/png'),
+            offset: {
+                x: 0,
+                y: 0,
+            },
+        };
+    }
+
+    const loadedImg = loadImg(buffer);
+    const image = await Jimp.fromBitmap({
+        width: loadedImg.header.width,
+        height: loadedImg.header.height,
+        data: new Uint8Array(loadedImg.bytes),
+    });
+    return {
+        contentUrl: await image.getBase64('image/png'),
+        offset: {
+            x: loadedImg.header.positionX,
+            y: loadedImg.header.positionY,
+        },
+    };
 }

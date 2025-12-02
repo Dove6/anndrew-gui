@@ -749,7 +749,7 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 
 					const files = getFiles({ source });
 					files.forEach(async (file) => {
-						const contentUrl = await readImageFile(file);
+						const { contentUrl, offset } = await readImageFile(file);
 						const cardId = `id:${getNextCardId()}`;
 						insertCard({
 							item: {
@@ -757,7 +757,7 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 								cardId,
 								name: file.name.replace(/\.[a-z0-9]+$/i, ''),
 								contentUrl,
-								offset: { x: 0, y: 0 },
+								offset,
 							},
 							finishColumnId,
 							itemIndexInFinishColumn,
