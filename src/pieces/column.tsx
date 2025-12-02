@@ -486,7 +486,7 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 								</Stack>}
 						</Stack>
 						<hr style={{ width: '93%', color: 'lightgray' }} />
-						<Stack alignBlock="center" xcss={xcss({ zIndex: '1', position: 'absolute', height: '100%', padding: 'space.200', textAlign: 'center', opacity: '75%', fontSize: '0.9em', display: column.items.length > 0 ? 'none' : undefined })}>
+						<Stack alignBlock="center" xcss={xcss({ zIndex: '1', position: 'absolute', height: '100%', padding: 'space.200', textAlign: 'center', opacity: '50%', fontSize: '0.9em', display: column.items.length > 0 ? 'none' : undefined })}>
 							{helpText}
 						</Stack>
 						<Box xcss={scrollContainerStyles} ref={scrollableRef}>

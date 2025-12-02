@@ -985,7 +985,7 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 					return <Column column={column} order={order} key={column.columnId} />;
 				})}
 				<Box xcss={eventScrollContainerStyles} ref={eventScrollableRef}>
-					<Stack alignBlock="center" xcss={xcss({ position: 'relative', width: 'inherit', padding: 'space.200', textAlign: 'center', opacity: '75%', fontSize: '0.9em', display: eventColumns.length > 0 ? 'none' : undefined })}>
+					<Stack alignBlock="center" xcss={xcss({ position: 'relative', width: 'inherit', padding: 'space.200', textAlign: 'center', opacity: '50%', fontSize: '0.9em', display: eventColumns.length > 0 ? 'none' : undefined })}>
 						<span style={{ fontWeight: 'bold' }}>No events here!</span>
 						<br />
 						<span>
