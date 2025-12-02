@@ -137,9 +137,7 @@ const isCardOver: State = { type: 'is-card-over' };
 const draggableStateStyles: {
 	[key in State['type']]: ReturnType<typeof xcss> | undefined;
 } = {
-	idle: xcss({
-		cursor: 'grab',
-	}),
+	idle: undefined,
 	'is-card-over': xcss({
 		backgroundColor: 'color.background.selected.hovered',
 	}),
@@ -174,6 +172,28 @@ const nonDraggableStateStyles: {
 	'is-card-over': xcss({
 		backgroundColor: 'color.background.selected.hovered',
 	}),
+	'is-column-over': undefined,
+	'generate-column-preview': undefined,
+	'generate-safari-column-preview': undefined,
+};
+
+const draggableHeaderStateStyles: {
+	[key in State['type']]: ReturnType<typeof xcss> | undefined;
+} = {
+	idle: xcss({
+		cursor: 'grab',
+	}),
+	'is-card-over': undefined,
+	'is-column-over': undefined,
+	'generate-column-preview': undefined,
+	'generate-safari-column-preview': undefined,
+};
+
+const nonDraggableHeaderStateStyles: {
+	[key in State['type']]: ReturnType<typeof xcss> | undefined;
+} = {
+	idle: undefined,
+	'is-card-over': undefined,
 	'is-column-over': undefined,
 	'generate-column-preview': undefined,
 	'generate-safari-column-preview': undefined,
@@ -328,6 +348,7 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 
 	const columnStyles = isImageColumn ? imageColumnStyles : frameColumnStyles;
 	const stateStyles = isDraggable ? draggableStateStyles : nonDraggableStateStyles;
+	const headerStateStyles = isDraggable ? draggableHeaderStateStyles : nonDraggableHeaderStateStyles;
 	const title = isImageColumn ? 'Images' : `Event ${order}: ${column.name}`;
 
 	const helpText = isImageColumn ? <>
@@ -360,7 +381,7 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 				*/}
 				<Stack xcss={stackStyles} ref={columnInnerRef}>
 					<Stack xcss={[stackStyles, isDragging ? isDraggingStyles : undefined]}>
-						<Stack ref={headerRef} xcss={xcss({ zIndex: '2' as '1' })}>
+						<Stack ref={headerRef} xcss={[xcss({ zIndex: '2' as '1' }), headerStateStyles[state.type]]}>
 							<Inline
 								space="space.100"
 								xcss={columnHeaderStyles}
