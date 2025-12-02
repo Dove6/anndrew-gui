@@ -44,7 +44,7 @@ import { dropTargetForExternal } from '@atlaskit/pragmatic-drag-and-drop/externa
 import { Box, Grid, Inline, Stack, xcss } from '@atlaskit/primitives';
 import { token } from '@atlaskit/tokens';
 
-import { type CardData, type ImageCard, type FrameCard, type EventColumn } from '../models';
+import { type CardData, type ImageCard, type FrameCard, type EventColumn, getNextCardId } from '../models';
 
 import { useBoardContext } from './board-context';
 import { useColumnContext } from './column-context';
@@ -166,8 +166,9 @@ function MoveToOtherColumnItem({
 	</DropdownItem>;
 }
 
-function LazyDropdownItems({ cardId }: { cardId: string }) {
-	const { getColumns, reorderCard, removeCard } = useBoardContext();
+function LazyDropdownItems({ item }: { item: CardData }) {
+	const { cardId } = item;
+	const { getColumns, reorderCard, removeCard, insertCard } = useBoardContext();
 	const { columnId, getCardIndex, getNumCards } = useColumnContext();
 
 	const numCards = getNumCards();
@@ -193,6 +194,24 @@ function LazyDropdownItems({ cardId }: { cardId: string }) {
 		removeCard({ startColumnId: columnId, itemIndexInStartColumn: startIndex });
 	}, [columnId, removeCard, startIndex]);
 
+	const duplicate = useCallback(() => {
+		const cardId = `card:${getNextCardId()}`;
+		insertCard({
+			finishColumnId: columnId,
+			itemIndexInFinishColumn: startIndex + 1,
+			item: item.type === 'image-card' ? {
+				...item,
+				offset: { ...item.offset },
+				cardId,
+			} : {
+				...item,
+				offset: { ...item.offset },
+				sfx: [...item.sfx],
+				cardId,
+			},
+		});
+	}, [columnId, insertCard, startIndex]);
+
 	const isMoveUpDisabled = startIndex === 0;
 	const isMoveDownDisabled = startIndex === numCards - 1;
 
@@ -209,6 +228,9 @@ function LazyDropdownItems({ cardId }: { cardId: string }) {
 		<Fragment>
 			<DropdownItem onClick={remove}>
 				Remove
+			</DropdownItem>
+			<DropdownItem onClick={duplicate}>
+				Duplicate
 			</DropdownItem>
 			<DropdownItemGroup title="Reorder">
 				<DropdownItem onClick={moveToTop} isDisabled={isMoveUpDisabled}>
@@ -367,7 +389,7 @@ const ImageCardPrimitive = (
 						)}
 						shouldRenderToParent={fg('should-render-to-parent-should-be-true-design-syst')}
 					>
-						<LazyDropdownItems cardId={cardId} />
+						<LazyDropdownItems item={item} />
 					</DropdownMenu>
 				</Inline>
 				<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>
@@ -518,7 +540,7 @@ const FrameCardPrimitive = (
 						)}
 						shouldRenderToParent={fg('should-render-to-parent-should-be-true-design-syst')}
 					>
-						<LazyDropdownItems cardId={cardId} />
+						<LazyDropdownItems item={item} />
 					</DropdownMenu>
 				</Inline>
 				<Inline alignBlock="baseline" xcss={xcss({ fontSize: 'small' })}>

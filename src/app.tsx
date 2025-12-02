@@ -14,7 +14,7 @@ import { dropTargetForExternal, monitorForExternal } from '@atlaskit/pragmatic-d
 import BoardExample from './example';
 import { Box, xcss } from '@atlaskit/primitives';
 import { loadAnn } from './fileFormats/ann';
-import type { BoardState, ColumnData, FrameCard, ImageCard, ImageColumn } from './models';
+import { getNextCardId, getNextColumnId, type BoardState, type ColumnData, type FrameCard, type ImageCard, type ImageColumn } from './models';
 import { token } from '@atlaskit/tokens';
 import PremiumIcon from '@atlaskit/icon/core/premium';
 import { Jimp, type JimpInstance } from "jimp";
@@ -58,7 +58,7 @@ export const App = () => {
 
         const images = ann.annImages.map((image, imageIndex) => ({
             type: 'image-card',
-            cardId: `card:${crypto.randomUUID()}`,
+            cardId: `card:${getNextCardId()}`,
             name: image.name ?? '',
             offset: {
                 x: image.positionX,
@@ -69,19 +69,19 @@ export const App = () => {
 
         const imageColumn: ImageColumn = {
             type: 'image-column',
-            columnId: `column:${crypto.randomUUID()}`,
+            columnId: `column:${getNextColumnId()}`,
             items: images,
         };
 
         const events = ann.events.map(event => ({
             type: 'event-column',
-            columnId: `column:${crypto.randomUUID()}`,
+            columnId: `column:${getNextColumnId()}`,
             name: event.name ?? '',
             opacity: event.transparency,
             loopLength: event.loopAfterFrame,
             items: event.frames.map((frame, frameIndex) => ({
                 type: 'frame-card',
-                cardId: `card:${crypto.randomUUID()}`,
+                cardId: `card:${getNextCardId()}`,
                 name: frame.name ?? '',
                 offset: {
                     x: frame.positionX,

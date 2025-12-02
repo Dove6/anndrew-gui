@@ -104,6 +104,7 @@ export type FrameCardUpdate = {
 };
 
 export const getNextCardId = () => crypto.randomUUID();
+export const getNextColumnId = () => crypto.randomUUID();
 
 export function getFrame(image: ImageCard): FrameCard {
 	const position = getNextCardId();
