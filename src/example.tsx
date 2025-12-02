@@ -13,6 +13,7 @@ import { monitorForExternal } from '@atlaskit/pragmatic-drag-and-drop/external/a
 import { reorder } from '@atlaskit/pragmatic-drag-and-drop/reorder';
 import { containsFiles, getFiles } from '@atlaskit/pragmatic-drag-and-drop/external/file';
 import { preventUnhandled } from '@atlaskit/pragmatic-drag-and-drop/prevent-unhandled';
+import { autoScrollForElements } from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element';
 
 import { type ColumnData, type CardData, type FrameCard, type BoardState, type Trigger, type Outcome, getFrame, getNextCardId, type CardUpdate, type ColumnUpdate, type BoardUpdate } from './models';
 import Board from './pieces/board';
@@ -693,7 +694,10 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 		[],
 	);
 
+	const eventScrollableRef = useRef<HTMLDivElement | null>(null);
+
 	useEffect(() => {
+		invariant(eventScrollableRef.current);
 		return combine(
 			monitorForExternal({
 				canMonitor: containsFiles,
@@ -889,6 +893,10 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 					}
 				},
 			}),
+			autoScrollForElements({
+				element: eventScrollableRef.current,
+				canScroll: ({ source }) => source.data.instanceId === instanceId,
+			})
 		);
 	}, [data, instanceId, moveCard, insertCard, removeCard, reorderCard, insertColumn, removeColumn, reorderColumn]);
 
@@ -913,8 +921,6 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 			instanceId,
 		};
 	}, [getColumns, reorderColumn, reorderCard, registry, insertColumn, removeColumn, moveCard, insertCard, removeCard, flashCard, flashColumn, updateCard, updateColumn, updateBoard, instanceId]);
-
-	const eventScrollableRef = useRef<HTMLDivElement | null>(null);
 
 	const onSave = useCallback(async () => {
 		const events = Object.values(data.columnMap).filter(c => c.type === 'event-column');
