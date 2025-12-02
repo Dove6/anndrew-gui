@@ -404,8 +404,8 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 				const itemCopy: FrameCard = item.type === 'image-card' ? getFrame(item) : { ...item, cardId: `id:${getNextCardId()}` };
 
 				const destinationItems = [...destinationColumn.items];
-				// Going into the first position if no index is provided
-				const newIndexInDestination = itemIndexInFinishColumn ?? 0;
+				// Going into the last position if no index is provided
+				const newIndexInDestination = itemIndexInFinishColumn ?? destinationItems.length;
 				destinationItems.splice(newIndexInDestination, 0, shouldCopy ? itemCopy : item);
 
 				const updatedMap = {
@@ -455,8 +455,8 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 			setData((data) => {
 				const destinationColumn = data.columnMap[finishColumnId];
 				const destinationItems = [...destinationColumn.items];
-				// Going into the first position if no index is provided
-				const newIndexInDestination = itemIndexInFinishColumn ?? 0;
+				// Going into the last position if no index is provided
+				const newIndexInDestination = itemIndexInFinishColumn ?? destinationItems.length;
 				destinationItems.splice(newIndexInDestination, 0, item);
 
 				const updatedMap = {
@@ -714,7 +714,7 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 					preventUnhandled.stop();
 
 					const { finishColumnId, itemIndexInFinishColumn, trigger }: { finishColumnId: string, itemIndexInFinishColumn?: number, trigger: Trigger } = (() => {
-						// dropping in a column (on its header)
+						// dropping in a column (outside cards)
 						if (location.current.dropTargets.length === 1) {
 							const [destinationColumnRecord] = location.current.dropTargets;
 							const destinationId = destinationColumnRecord.data.columnId;
