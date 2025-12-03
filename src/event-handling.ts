@@ -73,3 +73,27 @@ export const readImageFile = async (file?: File) => {
         },
     };
 }
+
+const defaultErrorHandler = (err: Error) => alert(err.toString());
+
+export function handleException<F extends Function>(func: F, handlerFunc?: (err: Error) => void) {
+    handlerFunc ??= defaultErrorHandler;
+    try {
+        return func();
+    } catch (err) {
+        let wrappedError: Error = err instanceof Error ? err : new Error(err?.toString());
+        handlerFunc(wrappedError);
+        throw err;
+    }
+};
+
+export async function handleExceptionPromise<R>(func: Promise<R>, handlerFunc?: (err: Error) => void) {
+    handlerFunc ??= defaultErrorHandler;
+    try {
+        return await func;
+    } catch (err) {
+        let wrappedError: Error = err instanceof Error ? err : new Error(err?.toString());
+        handlerFunc(wrappedError);
+        throw err;
+    }
+};

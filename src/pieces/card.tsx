@@ -49,7 +49,7 @@ import { type CardData, type ImageCard, type FrameCard, type EventColumn, getNex
 import { useBoardContext } from './board-context';
 import { useColumnContext } from './column-context';
 import { parseOpacity, stringifyOpacity, toInteger } from '../sanitization';
-import { allowTextSelection, blurOnEnterDown, disallowTextSelection, readImageFile } from '../event-handling';
+import { allowTextSelection, blurOnEnterDown, disallowTextSelection, handleExceptionPromise, readImageFile } from '../event-handling';
 
 function saveContentUrl(filename: string, contentUrl: string) {
 	var link = document.createElement('a');
@@ -341,7 +341,7 @@ const ImageCardPrimitive = (
 							input.onchange = async () => {
 								input.oncancel = null;
 								input.onchange = null;
-								const { contentUrl, offset: { x: offsetX, y: offsetY } } = await readImageFile(input.files?.[0]);
+								const { contentUrl, offset: { x: offsetX, y: offsetY } } = await handleExceptionPromise(readImageFile(input.files?.[0]));
 								updateCard({ columnId, cardId, cardUpdate: { type: 'image-card', contentUrl, offsetX, offsetY } });
 							};
 							input.click();

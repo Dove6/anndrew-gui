@@ -25,7 +25,7 @@ import { ColumnAdder } from './pieces/column-adder';
 import { Box, Stack, xcss } from '@atlaskit/primitives';
 import { dumpAnn, type ANN } from './fileFormats/ann';
 import { Jimp } from "jimp";
-import { readImageFile } from './event-handling';
+import { handleExceptionPromise, readImageFile } from './event-handling';
 
 const eventScrollContainerStyles = xcss({
 	maxWidth: '100%',
@@ -749,7 +749,7 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 
 					const files = getFiles({ source });
 					files.forEach(async (file) => {
-						const { contentUrl, offset, name } = await readImageFile(file);
+						const { contentUrl, offset, name } = await handleExceptionPromise(readImageFile(file));
 						const cardId = `id:${getNextCardId()}`;
 						insertCard({
 							item: {

@@ -3,7 +3,7 @@ import { IconButton } from '@atlaskit/button/new';
 import { useBoardContext } from './board-context';
 import { getNextCardId } from '../models';
 import { useRef } from 'react';
-import { readImageFile } from '../event-handling';
+import { handleExceptionPromise, readImageFile } from '../event-handling';
 
 export const ImageAdder = ({ columnId }: { columnId: string }) => {
 	const { insertCard } = useBoardContext();
@@ -40,7 +40,7 @@ export const ImageAdder = ({ columnId }: { columnId: string }) => {
 				input.onchange = async () => {
 					input.oncancel = null;
 					input.onchange = null;
-					const { name, contentUrl, offset } = await readImageFile(input.files?.[0]);
+					const { name, contentUrl, offset } = await handleExceptionPromise(readImageFile(input.files?.[0]));
 					insertCard({
 						finishColumnId: columnId,
 						item: {
