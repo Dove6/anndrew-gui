@@ -98,7 +98,7 @@ export interface ANN {
 
 const parseHeader = (view: BinaryBuffer) => {
     const magic = view.getUint32()
-    if (magic != 0x50564e) {
+    if (magic != 0x50564e && magic != 0x4d564e) {
         throw new Error('Not an image')
     }
 
