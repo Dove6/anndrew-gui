@@ -10,7 +10,7 @@ First, you have to upload a file to edit by clicking the "Upload ANN file" butto
 
 What awaits you after the file loads, is the main editor view consisting of multiple columns. The first column from the left ("Images") contains the list of all reference image frames (so-called images). The following columns (if any) represent the animated sequences (so-called events) stored inside the file. Each event is composed of references to the images (so-called frames).
 
-Images can be added by dragging graphics[^1] files from disk and dropping them on the "Images" column. Entries in the "Images" column can be also replaced in-place using images loaded from disk (using the "Replace image from disk" button). Event can be appended by clicking the "Create event" button on the right. Frames can be added to an event by dragging images from the "Images" column and dropping them on the column related to that event. Frames can be moved between events using drag-and-drop mechanics. All columns and their entries have drop-down menus with additional options (e.g. for removing a column).
+Images can be added by dragging graphics[^1] files from disk and dropping them on the "Images" column or by clicking the "Upload image" button on the bottom of the column. Entries in the "Images" column can be also replaced in-place using images loaded from disk (using the "Replace image from disk" button). Events can be appended by clicking the "Create event" button on the right. Frames can be added to an event by dragging images from the "Images" column and dropping them on the column related to that event. Frames can be moved between events using drag-and-drop mechanics. All columns and their entries have drop-down menus with additional options (e.g. for removing a column, duplicating an image).
 
 The header of the editor view consists of global properties of the file, including its filename, author, description, animation speed and opacity. Aside from that, each image has its own name and absolute offset (from the upper left corner of the screen). Then, each event has its name, opacity and loop length (a number of frames after which it restarts, with 0 meaning none). Finally, each frame has a name, offset (relative to image offset), opacity and a list of paths of sound files to be randomly chosen and played when the frame is displayed. All offsets are summed together and all opacities are multiplied.
 
@@ -46,4 +46,4 @@ pnpm run build
 - encoder/decoder of PiKlib/BlooMoo script files: https://github.com/Dove6/AMkd
 
 ---
-[^1]: JPEG, PNG, BMP, TIFF, or GIF
+[^1]: JPEG, PNG, BMP, TIFF, GIF, or IMG
