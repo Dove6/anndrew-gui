@@ -50,12 +50,35 @@ import { useBoardContext } from './board-context';
 import { useColumnContext } from './column-context';
 import { parseOpacity, stringifyOpacity, toInteger } from '../sanitization';
 import { allowTextSelection, blurOnEnterDown, disallowTextSelection, handleExceptionPromise, readImageFile } from '../event-handling';
+import { Jimp } from 'jimp';
+import { buildImage as buildImg } from '../fileFormats/img';
 
 function saveContentUrl(filename: string, contentUrl: string) {
 	var link = document.createElement('a');
 	link.href = contentUrl;
 	link.download = filename;
 	link.click();
+};
+
+function saveBuffer(filename: string, buffer: ArrayBuffer) {
+	var link = document.createElement('a');
+	link.href = URL.createObjectURL(new Blob([buffer]));
+	link.download = filename;
+	link.click();
+};
+
+const pngToImg = async (contentUrl: string, offset: { x: number, y: number }) => {
+	const image = (await Jimp.read(contentUrl)).bitmap;
+	return buildImg({
+		width: image.width,
+		height: image.height,
+		bpp: 16,
+		compressionType: 0,
+		positionX: offset.x,
+		positionY: offset.y,
+		imageLen: 0,
+		alphaLen: 0,
+	}, image.data);
 };
 
 type State =
@@ -280,7 +303,7 @@ const ImageCardPrimitive = (
 	const { columnId } = useColumnContext();
 	const uploaderRef = useRef<HTMLInputElement | null>(null);
 
-	const exportedFilename = (name.trim().length > 0 ? name : `${getFilename()}_image-${order}`) + '.png';
+	const exportedFilename = name.trim().length > 0 ? name : `${getFilename()}_image-${order}`;
 
 	return (
 		<Grid
@@ -306,22 +329,36 @@ const ImageCardPrimitive = (
 					}}
 				/>
 				<Box xcss={imageButtonsStyle}>
-					<IconButton
-						icon={(iconProps) => <DownloadIcon {...iconProps} size="small" />}
-						label={<span style={{ userSelect: 'none' }}>Export image to disk</span>}
-						isTooltipDisabled={false}
-						appearance="primary"
+					<DropdownMenu<HTMLButtonElement>
 						spacing="compact"
-						onClick={_ => saveContentUrl(exportedFilename, contentUrl)}
-						ref={ref => {
-							if (!ref) {
-								return;
-							}
-							ref.style.borderColor = 'white';
-							ref.style.borderStyle = 'solid';
-							ref.style.borderWidth = '1px';
-						}}
-					/>
+						shouldRenderToParent
+						trigger={({ triggerRef, ...triggerProps }) => (
+							<IconButton
+								{...triggerProps}
+								ref={ref => {
+									if (!ref) {
+										return;
+									}
+									ref.style.borderColor = 'white';
+									ref.style.borderStyle = 'solid';
+									ref.style.borderWidth = '1px';
+									ref.style.width = 'auto';
+									ref.style.height = 'auto';
+									ref.style.padding = '5px';
+									ref.title = 'Export image to disk';
+									(triggerRef as React.RefCallback<HTMLButtonElement>)(ref);
+								}}
+								label={<span style={{ userSelect: 'none' }}>Export image to disk</span>}
+								icon={(iconProps) => <DownloadIcon {...iconProps} size="small" />}
+								appearance="primary"
+							/>
+						)}
+					>
+						<DropdownItemGroup>
+							<DropdownItem onClick={_ => saveContentUrl(exportedFilename + '.png', contentUrl)}>As PNG</DropdownItem>
+							<DropdownItem onClick={async _ => saveBuffer(exportedFilename + '.img', await pngToImg(contentUrl, offset))}>As IMG</DropdownItem>
+						</DropdownItemGroup>
+					</DropdownMenu>
 					<span style={{ marginInlineEnd: '1px' }}></span>
 					<IconButton
 						icon={(iconProps) => <UploadIcon {...iconProps} size="small" />}
@@ -353,6 +390,9 @@ const ImageCardPrimitive = (
 							ref.style.borderColor = 'white';
 							ref.style.borderStyle = 'solid';
 							ref.style.borderWidth = '1px';
+							ref.style.width = 'auto';
+							ref.style.height = 'auto';
+							ref.style.padding = '5px';
 						}}
 					/>
 					<input type="file" accept="image/jpeg,image/png,image/bmp,image/tiff,image/gif,.img" ref={uploaderRef} style={{ display: 'none' }} />
