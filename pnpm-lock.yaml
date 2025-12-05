@@ -83,6 +83,9 @@ importers:
       bind-event-listener:
         specifier: ^3.0.0
         version: 3.0.0
+      iconv-lite:
+        specifier: ^0.7.0
+        version: 0.7.0
       jimp:
         specifier: ^1.6.0
         version: 1.6.0
@@ -92,6 +95,9 @@ importers:
       react-dom:
         specifier: ^18.2.0
         version: 18.3.1(react@18.3.1)
+      reksio-formats:
+        specifier: 0.0.3
+        version: 0.0.3
       styled-components:
         specifier: ^3.2.6
         version: 3.2.6(react@18.3.1)
@@ -1233,6 +1239,10 @@ packages:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
     engines: {node: '>=0.10.0'}
 
+  iconv-lite@0.7.0:
+    resolution: {integrity: sha512-cf6L2Ds3h57VVmkZe+Pn+5APsT7FpqJtEhhieDCvrE2MK5Qk9MyffgQyuxQTm6BChfeZNtcOLHp9IcWRVcIcBQ==}
+    engines: {node: '>=0.10.0'}
+
   ieee754@1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
 
@@ -1644,6 +1654,9 @@ packages:
   readable-web-to-node-stream@3.0.4:
     resolution: {integrity: sha512-9nX56alTf5bwXQ3ZDipHJhusu9NTQJ/CVPtb/XHAJCXihZeitfJvIRS4GqQ/mfIoOE3IelHMrpayVrosdHBuLw==}
     engines: {node: '>=8'}
+
+  reksio-formats@0.0.3:
+    resolution: {integrity: sha512-rkDuNtyatl3pqHH7Ng1ndVEsComQjgZTjdraBlkaXBIIll/hi5zbLiFNaQ9l1/5jRFiXdJHntzyG6SSUq/imxw==}
 
   resolve-from@4.0.0:
     resolution: {integrity: sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g==}
@@ -3434,6 +3447,10 @@ snapshots:
     dependencies:
       safer-buffer: 2.1.2
 
+  iconv-lite@0.7.0:
+    dependencies:
+      safer-buffer: 2.1.2
+
   ieee754@1.2.1: {}
 
   ignore@5.3.2: {}
@@ -3791,6 +3808,8 @@ snapshots:
   readable-web-to-node-stream@3.0.4:
     dependencies:
       readable-stream: 4.7.0
+
+  reksio-formats@0.0.3: {}
 
   resolve-from@4.0.0: {}
 

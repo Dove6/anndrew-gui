@@ -34,9 +34,11 @@
     "@atlaskit/tokens": "^7.1.1",
     "@emotion/react": "^11.7.1",
     "bind-event-listener": "^3.0.0",
+    "iconv-lite": "^0.7.0",
     "jimp": "^1.6.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "reksio-formats": "0.0.3",
     "styled-components": "^3.2.6",
     "tiny-invariant": "^1.2.0"
   },
