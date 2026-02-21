@@ -59,7 +59,7 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 					position: 'auto',
 					hideTooltipOnClick: true,
 				}}
-				onClick={onClear}
+				onClick={() => confirm('Do you really want to close the project without saving?') ? onClear() : undefined}
 			/>
 			<Box xcss={propertiesBox}>
 				<Inline alignBlock="baseline">
