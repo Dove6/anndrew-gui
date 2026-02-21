@@ -233,7 +233,7 @@ function LazyDropdownItems({ item }: { item: CardData }) {
 				cardId,
 			},
 		});
-	}, [columnId, insertCard, startIndex]);
+	}, [columnId, insertCard, startIndex, item]);
 
 	const isMoveUpDisabled = startIndex === 0;
 	const isMoveDownDisabled = startIndex === numCards - 1;
@@ -708,7 +708,7 @@ export const Card = ({ item, order }: { item: CardData, order: number }) => {
 	const { columnId } = useColumnContext();
 	const columns = getColumns();
 	const currentColumn = columns.find(column => column.columnId === columnId);
-	invariant(currentColumn);
+	invariant(currentColumn, `Sought ID: ${columnId}, present IDs: ${columns.map(c => c.columnId)}`);
 
 	const actionMenuTriggerRef = useRef<HTMLButtonElement>(null);
 	const { instanceId, registerCard } = useBoardContext();

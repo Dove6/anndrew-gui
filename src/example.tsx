@@ -215,9 +215,9 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 	}, []);
 
 	const getColumns = useCallback(() => {
-		const { columnMap, orderedColumnIds } = stableData.current;
+		const { columnMap, orderedColumnIds } = data;
 		return orderedColumnIds.map((columnId) => columnMap[columnId]);
-	}, []);
+	}, [data]);
 
 	const reorderColumn = useCallback(
 		({

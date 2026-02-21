@@ -38,7 +38,7 @@ import { containsFiles } from '@atlaskit/pragmatic-drag-and-drop/external/file';
 import { Box, Flex, Inline, Stack, xcss } from '@atlaskit/primitives';
 import { token } from '@atlaskit/tokens';
 
-import { type ColumnData } from '../models';
+import { getNextCardId, getNextColumnId, type ColumnData, type EventColumn } from '../models';
 
 import { useBoardContext } from './board-context';
 import { Card } from './card';
@@ -398,7 +398,7 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 								}}>
 									{title}
 								</Heading>
-								{!isImageColumn ? <ActionMenu /> : <></>}
+								{!isImageColumn ? <ActionMenu column={column} /> : <></>}
 							</Inline>
 							{isImageColumn
 								? <></>
@@ -419,6 +419,11 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 														continue;
 													}
 													alert('Event name must be unique!');
+													e.currentTarget.focus();
+													return;
+												}
+												if (name.length > 32) {
+													alert('Event name cannot be longer than 32 characters!');
 													e.currentTarget.focus();
 													return;
 												}
@@ -527,20 +532,20 @@ function SafariColumnPreview({ column }: { column: ColumnData }) {
 	);
 }
 
-function ActionMenu() {
+function ActionMenu({ column }: { column: EventColumn }) {
 	return (
 		<DropdownMenu
 			trigger={DropdownMenuTrigger}
 			shouldRenderToParent={fg('should-render-to-parent-should-be-true-design-syst')}
 		>
-			<ActionMenuItems />
+			<ActionMenuItems column={column} />
 		</DropdownMenu>
 	);
 }
 
-function ActionMenuItems() {
+function ActionMenuItems({ column }: { column: EventColumn }) {
 	const { columnId } = useColumnContext();
-	const { getColumns, reorderColumn, removeColumn } = useBoardContext();
+	const { getColumns, reorderColumn, removeColumn, insertColumn } = useBoardContext();
 
 	const columns = getColumns();
 	const startIndex = columns.findIndex((column) => column.columnId === columnId);
@@ -567,6 +572,32 @@ function ActionMenuItems() {
 		});
 	}, [removeColumn, startIndex]);
 
+	const duplicate = useCallback(() => {
+		const id = getNextColumnId();
+		const columnId = `column:${id}`;
+		const idSuffix = id.slice(-8);
+		// replace existing _COPY-xxxxxxxx suffix or all characters over 18 characters with new _COPY-xxxxxxxx suffix
+		const name = column.name.replace(/(_COPY-[a-f0-9]{8}|(?<=^.{18}).+)?$/, `_COPY-${idSuffix}`);
+		insertColumn({
+			finishIndex: startIndex + 1,
+			column: {
+				...column,
+				name,
+				items: column.items.map(item => item.type === 'image-card' ? {
+					...item,
+					offset: { ...item.offset },
+					cardId: `card:${getNextCardId()}`,
+				} : {
+					...item,
+					offset: { ...item.offset },
+					sfx: [...item.sfx],
+					cardId: `card:${getNextCardId()}`,
+				}),
+				columnId,
+			},
+		});
+	}, [column, insertColumn, startIndex]);
+
 	const isMoveLeftDisabled = startIndex === 0 || columns[startIndex - 1].type === 'image-column';
 	const isMoveRightDisabled = startIndex === columns.length - 1;
 	const isRemoveCurrentDisabled = isImageColumn;
@@ -581,6 +612,9 @@ function ActionMenuItems() {
 			</DropdownItem>
 			<DropdownItem onClick={removeCurrent} isDisabled={isRemoveCurrentDisabled}>
 				Remove
+			</DropdownItem>
+			<DropdownItem onClick={duplicate}>
+				Duplicate
 			</DropdownItem>
 		</DropdownItemGroup>
 	);

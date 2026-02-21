@@ -112,7 +112,13 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 						defaultValue={description}
 						onKeyDown={blurOnEnterDown}
 						onBlur={e => {
-							updateBoard({ boardUpdate: { description: e.currentTarget.value } });
+							const description = e.currentTarget.value;
+							if (description.length > 12) {
+								alert('Short description cannot be longer than 12 characters!');
+								e.currentTarget.focus();
+								return;
+							}
+							updateBoard({ boardUpdate: { description } });
 							e.currentTarget.setSelectionRange(0, 0);
 						}}
 						style={{ paddingBlock: '1px', textAlign: 'right', width: '100%' }}
