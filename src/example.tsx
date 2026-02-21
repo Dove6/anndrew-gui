@@ -38,7 +38,7 @@ const eventScrollContainerStyles = xcss({
 });
 
 function saveBlob(filename: string, blob: Blob) {
-	var link = document.createElement('a');
+	const link = document.createElement('a');
 	link.href = URL.createObjectURL(blob);
 	link.download = filename;
 	link.click();

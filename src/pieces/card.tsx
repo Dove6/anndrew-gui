@@ -54,14 +54,14 @@ import { Jimp } from 'jimp';
 import { buildImage as buildImg } from '../fileFormats/img';
 
 function saveContentUrl(filename: string, contentUrl: string) {
-	var link = document.createElement('a');
+	const link = document.createElement('a');
 	link.href = contentUrl;
 	link.download = filename;
 	link.click();
 };
 
 function saveBuffer(filename: string, buffer: ArrayBuffer) {
-	var link = document.createElement('a');
+	const link = document.createElement('a');
 	link.href = URL.createObjectURL(new Blob([buffer]));
 	link.download = filename;
 	link.click();

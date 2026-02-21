@@ -38,7 +38,7 @@ import { containsFiles } from '@atlaskit/pragmatic-drag-and-drop/external/file';
 import { Box, Flex, Inline, Stack, xcss } from '@atlaskit/primitives';
 import { token } from '@atlaskit/tokens';
 
-import { getNextCardId, getNextColumnId, type ColumnData, type EventColumn } from '../models';
+import { getNextCardId, getNextColumnId, type ColumnData, type EventColumn, type ImageCard, type ImageColumn } from '../models';
 
 import { useBoardContext } from './board-context';
 import { Card } from './card';
@@ -47,6 +47,22 @@ import Textfield from '@atlaskit/textfield';
 import { mod, parseOpacity, stringifyOpacity, toInteger } from '../sanitization';
 import { allowTextSelection, blurOnEnterDown, disallowTextSelection } from '../event-handling';
 import { ImageAdder } from './image-adder';
+import JSZip from 'jszip';
+
+async function savePngImagesAsZip(filename: string, images: ImageCard[]) {
+	const zip = new JSZip();
+	const maxIndexLength = Math.log(images.length) * Math.LOG10E + 1 | 0;
+	for (let i = 0; i < images.length; i++) {
+		const image = images[i];
+		zip.file(`${i.toString().padStart(maxIndexLength, '0')}_${image.name}.png`, image.contentUrl.replace(/^data:[^,]+,/, ''), { base64: true });
+	}
+	const buffer = await zip.generateAsync({ type: 'arraybuffer' });
+
+	const link = document.createElement('a');
+	link.href = URL.createObjectURL(new Blob([buffer]));
+	link.download = filename;
+	link.click();
+};
 
 const frameColumnStyles = xcss({
 	width: '250px',
@@ -398,7 +414,7 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 								}}>
 									{title}
 								</Heading>
-								{!isImageColumn ? <ActionMenu column={column} /> : <></>}
+								<ActionMenu column={column} />
 							</Inline>
 							{isImageColumn
 								? <></>
@@ -532,25 +548,35 @@ function SafariColumnPreview({ column }: { column: ColumnData }) {
 	);
 }
 
-function ActionMenu({ column }: { column: EventColumn }) {
+function ActionMenu({ column }: { column: ColumnData }) {
 	return (
 		<DropdownMenu
 			trigger={DropdownMenuTrigger}
 			shouldRenderToParent={fg('should-render-to-parent-should-be-true-design-syst')}
 		>
-			<ActionMenuItems column={column} />
+			{column.type === 'event-column' ? <EventActionMenuItems column={column} /> : <ImageActionMenuItems column={column} />}
 		</DropdownMenu>
 	);
 }
 
-function ActionMenuItems({ column }: { column: EventColumn }) {
+function ImageActionMenuItems({ column }: { column: ImageColumn }) {
+	const { getFilename } = useBoardContext();
+
+	return (
+		<DropdownItemGroup>
+			<DropdownItem onClick={() => savePngImagesAsZip(`${getFilename()}_images.zip`, column.items as ImageCard[])}>
+				Export images
+			</DropdownItem>
+		</DropdownItemGroup>
+	);
+}
+
+function EventActionMenuItems({ column }: { column: EventColumn }) {
 	const { columnId } = useColumnContext();
 	const { getColumns, reorderColumn, removeColumn, insertColumn } = useBoardContext();
 
 	const columns = getColumns();
 	const startIndex = columns.findIndex((column) => column.columnId === columnId);
-	const currentColumn = columns[startIndex];
-	const isImageColumn = currentColumn.type === 'image-column';
 
 	const moveLeft = useCallback(() => {
 		reorderColumn({
@@ -600,7 +626,6 @@ function ActionMenuItems({ column }: { column: EventColumn }) {
 
 	const isMoveLeftDisabled = startIndex === 0 || columns[startIndex - 1].type === 'image-column';
 	const isMoveRightDisabled = startIndex === columns.length - 1;
-	const isRemoveCurrentDisabled = isImageColumn;
 
 	return (
 		<DropdownItemGroup>
@@ -610,7 +635,7 @@ function ActionMenuItems({ column }: { column: EventColumn }) {
 			<DropdownItem onClick={moveRight} isDisabled={isMoveRightDisabled}>
 				Move right
 			</DropdownItem>
-			<DropdownItem onClick={removeCurrent} isDisabled={isRemoveCurrentDisabled}>
+			<DropdownItem onClick={removeCurrent}>
 				Remove
 			</DropdownItem>
 			<DropdownItem onClick={duplicate}>
