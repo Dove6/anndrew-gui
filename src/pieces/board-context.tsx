@@ -16,8 +16,12 @@ export type BoardContextValue = {
 	reorderCard: (args: { columnId: string; startIndex: number; finishIndex: number }) => void;
 
 	insertColumn: (args: {
-		column: ColumnData,
+		column: ColumnData;
 		finishIndex: number;
+	}) => void;
+
+	clearColumn: (args: {
+		columnId: string;
 	}) => void;
 
 	removeColumn: (args: {
@@ -32,13 +36,13 @@ export type BoardContextValue = {
 	}) => void;
 
 	insertCard: (args: {
-		item: ImageCard,
+		item: ImageCard;
 		finishColumnId: string;
 		itemIndexInFinishColumn?: number;
 	}) => void;
 
 	duplicateCard: (args: {
-		columnId: string,
+		columnId: string;
 		itemIndex: number;
 	}) => void;
 

@@ -287,6 +287,54 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 		[],
 	);
 
+	const clearColumn = useCallback(
+		({
+			columnId,
+			trigger = 'keyboard',
+		}: {
+			columnId: string;
+			trigger?: Trigger;
+		}) => {
+			setData((data) => {
+				const column = data.columnMap[columnId];
+				const updatedMap = {
+					...data.columnMap,
+					[columnId]: {
+						...column,
+						items: [],
+					},
+				};
+
+				if (column.type === 'image-column') {
+					for (const columnId in data.columnMap) {
+						const column = data.columnMap[columnId];
+						if (column.items.length > 0) {
+							updatedMap[columnId] = {
+								...column,
+								items: [],
+							};
+						}
+					}
+				}
+
+				const outcome: Outcome = {
+					type: 'card-remove',
+					startColumnId: columnId,
+					itemIndexInStartColumn: 0,
+				};
+				return {
+					...data,
+					columnMap: updatedMap,
+					lastOperation: {
+						outcome,
+						trigger: trigger,
+					},
+				};
+			});
+		},
+		[],
+	);
+
 	const removeColumn = useCallback(
 		({
 			startIndex,
@@ -993,6 +1041,7 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 			getColumns,
 			reorderColumn,
 			insertColumn,
+			clearColumn,
 			removeColumn,
 			reorderCard,
 			moveCard,
@@ -1013,6 +1062,7 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 		getColumns,
 		reorderColumn,
 		insertColumn,
+		clearColumn,
 		removeColumn,
 		reorderCard,
 		moveCard,

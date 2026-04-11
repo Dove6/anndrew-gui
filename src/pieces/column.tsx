@@ -560,12 +560,21 @@ function ActionMenu({ column }: { column: ColumnData }) {
 }
 
 function ImageActionMenuItems({ column }: { column: ImageColumn }) {
-	const { getFilename } = useBoardContext();
+	const { getFilename, clearColumn } = useBoardContext();
+
+	const clear = useCallback(() => {
+		clearColumn({
+			columnId: column.columnId,
+		});
+	}, [clearColumn, column.columnId]);
 
 	return (
 		<DropdownItemGroup>
 			<DropdownItem onClick={() => savePngImagesAsZip(`${getFilename()}_images.zip`, column.items as ImageCard[])}>
 				Export images
+			</DropdownItem>
+			<DropdownItem onClick={clear}>
+				Clear
 			</DropdownItem>
 		</DropdownItemGroup>
 	);
@@ -573,7 +582,7 @@ function ImageActionMenuItems({ column }: { column: ImageColumn }) {
 
 function EventActionMenuItems({ column }: { column: EventColumn }) {
 	const { columnId } = useColumnContext();
-	const { getColumns, reorderColumn, removeColumn, insertColumn } = useBoardContext();
+	const { getColumns, reorderColumn, removeColumn, insertColumn, clearColumn } = useBoardContext();
 
 	const columns = getColumns();
 	const startIndex = columns.findIndex((column) => column.columnId === columnId);
@@ -624,6 +633,12 @@ function EventActionMenuItems({ column }: { column: EventColumn }) {
 		});
 	}, [column, insertColumn, startIndex]);
 
+	const clear = useCallback(() => {
+		clearColumn({
+			columnId,
+		});
+	}, [clearColumn, columnId]);
+
 	const isMoveLeftDisabled = startIndex === 0 || columns[startIndex - 1].type === 'image-column';
 	const isMoveRightDisabled = startIndex === columns.length - 1;
 
@@ -640,6 +655,9 @@ function EventActionMenuItems({ column }: { column: EventColumn }) {
 			</DropdownItem>
 			<DropdownItem onClick={duplicate}>
 				Duplicate
+			</DropdownItem>
+			<DropdownItem onClick={clear}>
+				Clear
 			</DropdownItem>
 		</DropdownItemGroup>
 	);
