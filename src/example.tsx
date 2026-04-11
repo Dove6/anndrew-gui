@@ -627,7 +627,7 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 			entry.element.scrollIntoView();
 			triggerPostMoveFlash(entry.element);
 		},
-		[],
+		[registry],
 	);
 
 	const flashColumn = useCallback(
@@ -636,7 +636,7 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 			entry.element.scrollIntoView();
 			triggerPostMoveFlash(entry.element);
 		},
-		[],
+		[registry],
 	);
 
 	const updateCard = useCallback(
@@ -1008,7 +1008,26 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 			updateBoard,
 			instanceId,
 		};
-	}, [getColumns, reorderColumn, reorderCard, registry, insertColumn, removeColumn, moveCard, insertCard, duplicateCard, removeCard, flashCard, flashColumn, updateCard, updateColumn, updateBoard, instanceId]);
+	}, [
+		data.filename,
+		getColumns,
+		reorderColumn,
+		insertColumn,
+		removeColumn,
+		reorderCard,
+		moveCard,
+		insertCard,
+		duplicateCard,
+		removeCard,
+		registry.registerCard,
+		registry.registerColumn,
+		flashCard,
+		flashColumn,
+		updateCard,
+		updateColumn,
+		updateBoard,
+		instanceId,
+]);
 
 	const onSave = useCallback(async () => {
 		const events = Object.values(data.columnMap).filter(c => c.type === 'event-column');

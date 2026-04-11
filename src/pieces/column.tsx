@@ -343,7 +343,7 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 			}));
 		}
 		return combine(...fnList);
-	}, [columnId, registerColumn, instanceId, isDraggable]);
+	}, [columnId, registerColumn, instanceId, isDraggable, column.type]);
 
 	const stableItems = useRef(column.items);
 	useEffect(() => {

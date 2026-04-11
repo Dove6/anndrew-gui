@@ -107,7 +107,7 @@ export const App = () => {
 
             lastOperation: null,
         });
-    }, [instanceId, setInitialBoardState]);
+    }, [setInitialBoardState]);
 
     const createEmpty = useCallback(() => {
         const imagesColumn: ColumnData = {
@@ -130,7 +130,7 @@ export const App = () => {
 
             lastOperation: null,
         });
-    }, [instanceId, setInitialBoardState]);
+    }, [setInitialBoardState]);
 
     useEffect(() => {
         const element = buttonRef.current;
@@ -168,7 +168,7 @@ export const App = () => {
                 },
             }),
         ) : () => { };
-    }, [instanceId, buttonRef.current]);
+    }, [instanceId, setSourceAnn]);
 
     useEffect(() => {
         const element = buttonRef.current;
@@ -180,7 +180,7 @@ export const App = () => {
         element.style.backgroundColor = state === isOverState
             ? token('color.background.selected.hovered')
             : token('elevation.surface.sunken');
-    }, [buttonRef.current, state]);
+    }, [state]);
 
     const onClear = useCallback(() => setInitialBoardState(undefined), [setInitialBoardState]);
 

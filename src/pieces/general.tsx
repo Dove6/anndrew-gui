@@ -46,7 +46,7 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 			<IconButton
 				icon={DeleteIcon}
 				label={<span style={{ userSelect: 'none' }}>Close without saving</span>}
-				appearance={'danger' as any as 'default'}
+				appearance={'danger' as 'default'}
 				isTooltipDisabled={false}
 				ref={(ref) => {
 					if (!ref) {

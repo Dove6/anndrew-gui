@@ -785,7 +785,7 @@ export const Card = ({ item, order }: { item: CardData, order: number }) => {
 				onDrop: () => setClosestEdge(null),
 			}),
 		);
-	}, [instanceId, item, cardId]);
+	}, [instanceId, item, cardId, currentColumn.type]);
 
 	return (
 		<Fragment>
