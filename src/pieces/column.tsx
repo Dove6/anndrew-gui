@@ -247,7 +247,7 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 			dropTargetForExternal({
 				element: columnInnerRef.current,
 				getData: () => ({ columnId }),
-				canDrop: ({ source }) => column.type === 'image-column' && containsFiles({ source }),
+				canDrop: ({ source }) => containsFiles({ source }),
 				getIsSticky: () => true,
 				onDragEnter: () => setState(isCardOver),
 				onDragLeave: () => setState(idle),

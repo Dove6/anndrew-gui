@@ -4,7 +4,7 @@ import invariant from 'tiny-invariant';
 
 import type { CleanupFn } from '@atlaskit/pragmatic-drag-and-drop/types';
 
-import type { BoardUpdate, CardData, CardUpdate, ColumnData, ColumnUpdate } from '../models';
+import type { BoardUpdate, CardUpdate, ColumnData, ColumnUpdate, ImageCard } from '../models';
 
 export type BoardContextValue = {
 	getFilename: () => string;
@@ -32,7 +32,7 @@ export type BoardContextValue = {
 	}) => void;
 
 	insertCard: (args: {
-		item: CardData,
+		item: ImageCard,
 		finishColumnId: string;
 		itemIndexInFinishColumn?: number;
 	}) => void;

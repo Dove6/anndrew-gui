@@ -15,7 +15,7 @@ import { containsFiles, getFiles } from '@atlaskit/pragmatic-drag-and-drop/exter
 import { preventUnhandled } from '@atlaskit/pragmatic-drag-and-drop/prevent-unhandled';
 import { autoScrollForElements } from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element';
 
-import { type ColumnData, type CardData, type FrameCard, type BoardState, type Trigger, type Outcome, getFrame, getNextCardId, type CardUpdate, type ColumnUpdate, type BoardUpdate, type ImageColumn, type EventColumn } from './models';
+import { type ColumnData, type CardData, type FrameCard, type BoardState, type Trigger, type Outcome, getFrame, getNextCardId, type CardUpdate, type ColumnUpdate, type BoardUpdate, type ImageColumn, type EventColumn, type ImageCard } from './models';
 import Board from './pieces/board';
 import { BoardContext, type BoardContextValue } from './pieces/board-context';
 import { Column } from './pieces/column';
@@ -447,31 +447,65 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 			itemIndexInFinishColumn,
 			trigger = 'keyboard',
 		}: {
-			item: CardData;
+			item: ImageCard;
 			finishColumnId: string;
 			itemIndexInFinishColumn?: number;
 			trigger?: Trigger,
 		}) => {
 			setData((data) => {
-				const destinationColumn = data.columnMap[finishColumnId];
-				const destinationItems = [...destinationColumn.items];
-				// Going into the last position if no index is provided
-				const newIndexInDestination = itemIndexInFinishColumn ?? destinationItems.length;
-				destinationItems.splice(newIndexInDestination, 0, item);
+				const insertedIntoEvent = data.columnMap[finishColumnId].type === 'event-column';
+
+				const imageColumnId = insertedIntoEvent ? (() => {
+					for (const columnId in data.columnMap) {
+						if (data.columnMap[columnId].type === 'image-column') {
+							return columnId;
+						}
+					}
+					throw new Error('Image column not found');
+				})() : finishColumnId;
+				const imageColumn = data.columnMap[imageColumnId];
+				const imageColumnItems = [...imageColumn.items];
+				const newIndexInImageColumn = insertedIntoEvent
+					? imageColumnItems.length
+					// Going into the last position if no index is provided
+					: itemIndexInFinishColumn ?? imageColumnItems.length;
+				imageColumnItems.splice(newIndexInImageColumn, 0, item);
 
 				const updatedMap = {
 					...data.columnMap,
-					[finishColumnId]: {
-						...destinationColumn,
-						items: destinationItems,
+					[imageColumnId]: {
+						...imageColumn,
+						items: imageColumnItems,
 					},
 				};
-
 				const outcome: Outcome | null = {
 					type: 'card-insert',
 					finishColumnId,
-					itemIndexInFinishColumn: newIndexInDestination,
+					itemIndexInFinishColumn: newIndexInImageColumn,
 				};
+
+				if (insertedIntoEvent) {
+					const eventColumnId = finishColumnId;
+					const eventColumn = data.columnMap[eventColumnId];
+					const eventColumnItems = [...eventColumn.items];
+					// Going into the last position if no index is provided
+					const newIndexInEventColumn = itemIndexInFinishColumn ?? eventColumnItems.length;
+					outcome.itemIndexInFinishColumn = newIndexInEventColumn;
+					eventColumnItems.splice(newIndexInEventColumn, 0, {
+						type: 'frame-card',
+						cardId: `card:${getNextCardId()}`,
+						name: item.name,
+						offset: { x: 0, y: 0 },
+						opacity: 255,
+						imageRef: item,
+						sfx: [],
+					});
+
+					updatedMap[eventColumnId] = {
+						...eventColumn,
+						items: eventColumnItems,
+					};
+				}
 
 				return {
 					...data,
@@ -750,11 +784,10 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 					const files = getFiles({ source });
 					files.forEach(async (file) => {
 						const { contentUrl, offset, name } = await handleExceptionPromise(readImageFile(file));
-						const cardId = `id:${getNextCardId()}`;
 						insertCard({
 							item: {
 								type: 'image-card',
-								cardId,
+								cardId: `card:${getNextCardId()}`,
 								name,
 								contentUrl,
 								offset,
