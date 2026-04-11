@@ -37,6 +37,11 @@ export type BoardContextValue = {
 		itemIndexInFinishColumn?: number;
 	}) => void;
 
+	duplicateCard: (args: {
+		columnId: string,
+		itemIndex: number;
+	}) => void;
+
 	removeCard: (args: {
 		startColumnId: string;
 		itemIndexInStartColumn: number;

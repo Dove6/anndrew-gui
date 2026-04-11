@@ -44,7 +44,7 @@ import { dropTargetForExternal } from '@atlaskit/pragmatic-drag-and-drop/externa
 import { Box, Grid, Inline, Stack, xcss } from '@atlaskit/primitives';
 import { token } from '@atlaskit/tokens';
 
-import { type CardData, type ImageCard, type FrameCard, type EventColumn, getNextCardId } from '../models';
+import { type CardData, type ImageCard, type FrameCard, type EventColumn } from '../models';
 
 import { useBoardContext } from './board-context';
 import { useColumnContext } from './column-context';
@@ -191,7 +191,7 @@ function MoveToOtherColumnItem({
 
 function LazyDropdownItems({ item }: { item: CardData }) {
 	const { cardId } = item;
-	const { getColumns, reorderCard, removeCard, insertCard } = useBoardContext();
+	const { getColumns, reorderCard, removeCard, duplicateCard } = useBoardContext();
 	const { columnId, getCardIndex, getNumCards } = useColumnContext();
 
 	const numCards = getNumCards();
@@ -218,22 +218,11 @@ function LazyDropdownItems({ item }: { item: CardData }) {
 	}, [columnId, removeCard, startIndex]);
 
 	const duplicate = useCallback(() => {
-		const cardId = `card:${getNextCardId()}`;
-		insertCard({
-			finishColumnId: columnId,
-			itemIndexInFinishColumn: startIndex + 1,
-			item: item.type === 'image-card' ? {
-				...item,
-				offset: { ...item.offset },
-				cardId,
-			} : {
-				...item,
-				offset: { ...item.offset },
-				sfx: [...item.sfx],
-				cardId,
-			},
+		duplicateCard({
+			columnId,
+			itemIndex: startIndex,
 		});
-	}, [columnId, insertCard, startIndex, item]);
+	}, [columnId, duplicateCard, startIndex]);
 
 	const isMoveUpDisabled = startIndex === 0;
 	const isMoveDownDisabled = startIndex === numCards - 1;

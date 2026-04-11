@@ -520,6 +520,60 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 		[],
 	);
 
+	const duplicateCard = useCallback(
+		({
+			columnId,
+			itemIndex,
+			trigger = 'keyboard',
+		}: {
+			columnId: string,
+			itemIndex: number;
+			trigger?: Trigger,
+		}) => {
+			setData((data) => {
+				const column = data.columnMap[columnId];
+				const columnItems = [...column.items];
+				const item = columnItems[itemIndex];
+				const cardId = `card:${getNextCardId()}`;
+				const insertedItem = item.type === 'image-card' ? {
+					...item,
+					offset: { ...item.offset },
+					cardId,
+				} : {
+					...item,
+					offset: { ...item.offset },
+					sfx: [...item.sfx],
+					cardId,
+				};
+				const insertedIndex = itemIndex + 1;
+
+				columnItems.splice(insertedIndex, 0, insertedItem);
+				const updatedMap = {
+					...data.columnMap,
+					[columnId]: {
+						...column,
+						items: columnItems,
+					},
+				};
+				const outcome: Outcome | null = {
+					type: 'card-insert',
+					finishColumnId: columnId,
+					itemIndexInFinishColumn: insertedIndex,
+				};
+
+				return {
+					...data,
+					columnMap: updatedMap,
+					lastOperation: {
+						outcome,
+						trigger,
+					},
+				};
+			});
+		},
+		[],
+	);
+
 	const removeCard = useCallback(
 		({
 			startColumnId,
@@ -943,6 +997,7 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 			reorderCard,
 			moveCard,
 			insertCard,
+			duplicateCard,
 			removeCard,
 			registerCard: registry.registerCard,
 			registerColumn: registry.registerColumn,
@@ -953,7 +1008,7 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 			updateBoard,
 			instanceId,
 		};
-	}, [getColumns, reorderColumn, reorderCard, registry, insertColumn, removeColumn, moveCard, insertCard, removeCard, flashCard, flashColumn, updateCard, updateColumn, updateBoard, instanceId]);
+	}, [getColumns, reorderColumn, reorderCard, registry, insertColumn, removeColumn, moveCard, insertCard, duplicateCard, removeCard, flashCard, flashColumn, updateCard, updateColumn, updateBoard, instanceId]);
 
 	const onSave = useCallback(async () => {
 		const events = Object.values(data.columnMap).filter(c => c.type === 'event-column');
