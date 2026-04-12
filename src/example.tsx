@@ -376,6 +376,44 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 		[],
 	);
 
+	const sortItems = useCallback(
+		({
+			columnId,
+			compareFn,
+			trigger = 'keyboard',
+		}: {
+			columnId: string;
+			compareFn: (a: CardData, b: CardData) => number;
+			trigger?: Trigger;
+		}) => {
+			setData((data) => {
+				const column = data.columnMap[columnId];
+				const updatedMap = {
+					...data.columnMap,
+					[columnId]: {
+						...column,
+						items: column.items.toSorted(compareFn),
+					},
+				};
+
+				const outcome: Outcome = {
+					type: 'column-insert',
+					columnId,
+					finishIndex: data.orderedColumnIds.indexOf(columnId),
+				};
+				return {
+					...data,
+					columnMap: updatedMap,
+					lastOperation: {
+						outcome,
+						trigger: trigger,
+					},
+				};
+			});
+		},
+		[],
+	);
+
 	const removeColumn = useCallback(
 		({
 			startIndex,
@@ -1084,6 +1122,7 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 			insertColumn,
 			clearColumn,
 			setOffsetForColumn,
+			sortItems,
 			removeColumn,
 			reorderCard,
 			moveCard,
@@ -1106,6 +1145,7 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 		insertColumn,
 		clearColumn,
 		setOffsetForColumn,
+		sortItems,
 		removeColumn,
 		reorderCard,
 		moveCard,

@@ -4,7 +4,7 @@ import invariant from 'tiny-invariant';
 
 import type { CleanupFn } from '@atlaskit/pragmatic-drag-and-drop/types';
 
-import type { BoardUpdate, CardUpdate, ColumnData, ColumnUpdate, ImageCard } from '../models';
+import type { BoardUpdate, CardData, CardUpdate, ColumnData, ColumnUpdate, ImageCard } from '../models';
 
 export type BoardContextValue = {
 	getFilename: () => string;
@@ -27,6 +27,11 @@ export type BoardContextValue = {
 	setOffsetForColumn: (args: {
 		columnId: string;
 		offset: { x: number, y: number };
+	}) => void;
+
+	sortItems: (args: {
+		columnId: string;
+		compareFn: (a: CardData, b: CardData) => number;
 	}) => void;
 
 	removeColumn: (args: {

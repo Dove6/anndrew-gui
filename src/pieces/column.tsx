@@ -585,7 +585,7 @@ const promptForOffset: () => { x: number, y: number } | null = () => {
 };
 
 function GeneralActionMenuItems({ column }: { column: ColumnData }) {
-	const { clearColumn, setOffsetForColumn } = useBoardContext();
+	const { clearColumn, setOffsetForColumn, sortItems } = useBoardContext();
 
 	const clear = useCallback(() => {
 		clearColumn({
@@ -604,6 +604,13 @@ function GeneralActionMenuItems({ column }: { column: ColumnData }) {
 		});
 	}, [setOffsetForColumn, column.columnId]);
 
+	const sortByName = useCallback(() => {
+		sortItems({
+			columnId: column.columnId,
+			compareFn: (a, b) => a.name.localeCompare(b.name),
+		});
+	}, [sortItems, column.columnId]);
+
 	return (
 		<DropdownItemGroup hasSeparator>
 			<DropdownItem onClick={clear}>
@@ -611,6 +618,9 @@ function GeneralActionMenuItems({ column }: { column: ColumnData }) {
 			</DropdownItem>
 			<DropdownItem onClick={setOffset}>
 				Set offset
+			</DropdownItem>
+			<DropdownItem onClick={sortByName}>
+				Sort by name
 			</DropdownItem>
 		</DropdownItemGroup>
 	);
