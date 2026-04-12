@@ -963,21 +963,23 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 					})();
 
 					const files = getFiles({ source });
-					files.forEach(async (file) => {
-						const { contentUrl, offset, name } = await handleExceptionPromise(readImageFile(file));
-						insertCard({
-							item: {
-								type: 'image-card',
-								cardId: `card:${getNextCardId()}`,
-								name,
-								contentUrl,
-								offset,
-							},
-							finishColumnId,
-							itemIndexInFinishColumn,
-							trigger,
-						});
-					});
+					handleExceptionPromise((async () => {
+						for (const file of files) {
+							const { contentUrl, offset, name } = await readImageFile(file);
+							insertCard({
+								item: {
+									type: 'image-card',
+									cardId: `card:${getNextCardId()}`,
+									name,
+									contentUrl,
+									offset,
+								},
+								finishColumnId,
+								itemIndexInFinishColumn,
+								trigger,
+							});
+						}
+					})());
 				},
 			}),
 			monitorForElements({

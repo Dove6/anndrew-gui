@@ -18,6 +18,7 @@ import { getNextCardId, getNextColumnId, type BoardState, type ColumnData, type 
 import { token } from '@atlaskit/tokens';
 import PremiumIcon from '@atlaskit/icon/core/premium';
 import { Jimp, type JimpInstance } from "jimp";
+import { handleExceptionPromise } from './event-handling';
 
 const boardStyles = xcss({
     paddingBlockStart: 'space.250',
@@ -158,13 +159,17 @@ export const App = () => {
                     preventUnhandled.stop();
 
                     const files = getFiles({ source });
-                    files.forEach(async (file) => {
+                    if (files.length > 1) {
+                        console.warn(`Multiple files dropped onto 'Upload ANN file', using only the first one: ${files[0].name}`);
+                    }
+                    handleExceptionPromise((async () => {
+                        const file = files[0];
                         if (file == null) {
                             return;
                         }
                         const buffer = await file.arrayBuffer();
                         setSourceAnn(buffer, file.name);
-                    });
+                    })());
                 },
             }),
         ) : () => { };
