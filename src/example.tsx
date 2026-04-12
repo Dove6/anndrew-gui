@@ -335,6 +335,47 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 		[],
 	);
 
+	const setOffsetForColumn = useCallback(
+		({
+			columnId,
+			offset,
+			trigger = 'keyboard',
+		}: {
+			columnId: string;
+			offset: { x: number, y: number };
+			trigger?: Trigger;
+		}) => {
+			setData((data) => {
+				const column = data.columnMap[columnId];
+				const updatedMap = {
+					...data.columnMap,
+					[columnId]: {
+						...column,
+						items: column.items.map(item => ({
+							...item,
+							offset: { ...offset },
+						})),
+					},
+				};
+
+				const outcome: Outcome = {
+					type: 'column-insert',
+					columnId,
+					finishIndex: data.orderedColumnIds.indexOf(columnId),
+				};
+				return {
+					...data,
+					columnMap: updatedMap,
+					lastOperation: {
+						outcome,
+						trigger: trigger,
+					},
+				};
+			});
+		},
+		[],
+	);
+
 	const removeColumn = useCallback(
 		({
 			startIndex,
@@ -1042,6 +1083,7 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 			reorderColumn,
 			insertColumn,
 			clearColumn,
+			setOffsetForColumn,
 			removeColumn,
 			reorderCard,
 			moveCard,
@@ -1063,6 +1105,7 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 		reorderColumn,
 		insertColumn,
 		clearColumn,
+		setOffsetForColumn,
 		removeColumn,
 		reorderCard,
 		moveCard,

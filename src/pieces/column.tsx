@@ -45,7 +45,7 @@ import { Card } from './card';
 import { ColumnContext, type ColumnContextProps, useColumnContext } from './column-context';
 import Textfield from '@atlaskit/textfield';
 import { mod, parseOpacity, stringifyOpacity, toInteger } from '../sanitization';
-import { allowTextSelection, blurOnEnterDown, disallowTextSelection } from '../event-handling';
+import { allowTextSelection, blurOnEnterDown, disallowTextSelection, handleException } from '../event-handling';
 import { ImageAdder } from './image-adder';
 import JSZip from 'jszip';
 
@@ -555,12 +555,37 @@ function ActionMenu({ column }: { column: ColumnData }) {
 			shouldRenderToParent={fg('should-render-to-parent-should-be-true-design-syst')}
 		>
 			{column.type === 'event-column' ? <EventActionMenuItems column={column} /> : <ImageActionMenuItems column={column} />}
+			<GeneralActionMenuItems column={column} />
 		</DropdownMenu>
 	);
 }
 
-function ImageActionMenuItems({ column }: { column: ImageColumn }) {
-	const { getFilename, clearColumn } = useBoardContext();
+const toOffset = (split: string[]) => {
+	if (split.length === 2) {
+		return { x: toInteger(split[0]), y: toInteger(split[1]) };
+	} else if (split.length > 2) {
+		throw new Error(`Too many numbers: [${split.join(', ')}]`);
+	}
+	return null;
+};
+
+const promptForOffset: () => { x: number, y: number } | null = () => {
+	const response = prompt('Offset (format: HORIZONTALxVERTICAL):', '0x0');
+	if (!response) {
+		return null;
+	}
+	const offset = toOffset(response.split('x'))
+		?? toOffset(response.split(','))
+		?? toOffset(response.split(';'))
+		?? toOffset(response.split(':'));
+	if (!offset) {
+		throw new Error(`Unknown format of offset (should be two numbers separated by 'x', was: '${response}')`);
+	}
+	return offset;
+};
+
+function GeneralActionMenuItems({ column }: { column: ColumnData }) {
+	const { clearColumn, setOffsetForColumn } = useBoardContext();
 
 	const clear = useCallback(() => {
 		clearColumn({
@@ -568,13 +593,36 @@ function ImageActionMenuItems({ column }: { column: ImageColumn }) {
 		});
 	}, [clearColumn, column.columnId]);
 
+	const setOffset = useCallback(() => {
+		const offset: { x: number, y: number } | null = handleException(promptForOffset);
+		if (!offset) {
+			return;
+		}
+		setOffsetForColumn({
+			columnId: column.columnId,
+			offset,
+		});
+	}, [setOffsetForColumn, column.columnId]);
+
+	return (
+		<DropdownItemGroup hasSeparator>
+			<DropdownItem onClick={clear}>
+				Clear
+			</DropdownItem>
+			<DropdownItem onClick={setOffset}>
+				Set offset
+			</DropdownItem>
+		</DropdownItemGroup>
+	);
+}
+
+function ImageActionMenuItems({ column }: { column: ImageColumn }) {
+	const { getFilename } = useBoardContext();
+
 	return (
 		<DropdownItemGroup>
 			<DropdownItem onClick={() => savePngImagesAsZip(`${getFilename()}_images.zip`, column.items as ImageCard[])}>
 				Export images
-			</DropdownItem>
-			<DropdownItem onClick={clear}>
-				Clear
 			</DropdownItem>
 		</DropdownItemGroup>
 	);
@@ -582,7 +630,7 @@ function ImageActionMenuItems({ column }: { column: ImageColumn }) {
 
 function EventActionMenuItems({ column }: { column: EventColumn }) {
 	const { columnId } = useColumnContext();
-	const { getColumns, reorderColumn, removeColumn, insertColumn, clearColumn } = useBoardContext();
+	const { getColumns, reorderColumn, removeColumn, insertColumn } = useBoardContext();
 
 	const columns = getColumns();
 	const startIndex = columns.findIndex((column) => column.columnId === columnId);
@@ -633,12 +681,6 @@ function EventActionMenuItems({ column }: { column: EventColumn }) {
 		});
 	}, [column, insertColumn, startIndex]);
 
-	const clear = useCallback(() => {
-		clearColumn({
-			columnId,
-		});
-	}, [clearColumn, columnId]);
-
 	const isMoveLeftDisabled = startIndex === 0 || columns[startIndex - 1].type === 'image-column';
 	const isMoveRightDisabled = startIndex === columns.length - 1;
 
@@ -655,9 +697,6 @@ function EventActionMenuItems({ column }: { column: EventColumn }) {
 			</DropdownItem>
 			<DropdownItem onClick={duplicate}>
 				Duplicate
-			</DropdownItem>
-			<DropdownItem onClick={clear}>
-				Clear
 			</DropdownItem>
 		</DropdownItemGroup>
 	);

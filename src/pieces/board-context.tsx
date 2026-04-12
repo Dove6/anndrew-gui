@@ -24,6 +24,11 @@ export type BoardContextValue = {
 		columnId: string;
 	}) => void;
 
+	setOffsetForColumn: (args: {
+		columnId: string;
+		offset: { x: number, y: number };
+	}) => void;
+
 	removeColumn: (args: {
 		startIndex: number;
 	}) => void;

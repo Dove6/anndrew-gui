@@ -442,6 +442,7 @@ const ImageCardPrimitive = (
 					<Textfield
 						appearance="subtle"
 						defaultValue={offset.x}
+						key={`${cardId}-x-${offset.x}`}
 						onKeyDown={blurOnEnterDown}
 						onMouseDown={allowTextSelection(cardDivRef)}
 						onMouseLeave={disallowTextSelection(cardDivRef)}
@@ -465,6 +466,7 @@ const ImageCardPrimitive = (
 					<Textfield
 						appearance="subtle"
 						defaultValue={offset.y}
+						key={`${cardId}-y-${offset.y}`}
 						onKeyDown={blurOnEnterDown}
 						onMouseDown={allowTextSelection(cardDivRef)}
 						onMouseLeave={disallowTextSelection(cardDivRef)}
@@ -593,6 +595,7 @@ const FrameCardPrimitive = (
 					<Textfield
 						appearance="subtle"
 						defaultValue={offset.x}
+						key={`${cardId}-x-${offset.x}`}
 						onKeyDown={blurOnEnterDown}
 						onMouseDown={allowTextSelection(cardDivRef)}
 						onMouseLeave={disallowTextSelection(cardDivRef)}
@@ -616,6 +619,7 @@ const FrameCardPrimitive = (
 					<Textfield
 						appearance="subtle"
 						defaultValue={offset.y}
+						key={`${cardId}-y-${offset.y}`}
 						onKeyDown={blurOnEnterDown}
 						onMouseDown={allowTextSelection(cardDivRef)}
 						onMouseLeave={disallowTextSelection(cardDivRef)}
