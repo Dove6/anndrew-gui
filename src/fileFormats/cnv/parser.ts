@@ -1,6 +1,6 @@
 import { structureDefinitions } from './types'
 import { FieldProcessorRecoverableError, FieldTypeEntry } from '../common'
-import { NotImplementedError } from '../../common/errors'
+import { logger } from '../logger'
 
 export interface CNVObject {
     TYPE: string
@@ -51,7 +51,7 @@ export const parseCNV = (content: string) => {
             }
 
             if (variableName !== 'TYPE' && !Object.prototype.hasOwnProperty.call(structureDefinitions, object.TYPE)) {
-                throw new NotImplementedError(`Objects of type ${object.TYPE} are not supported`)
+                throw new Error(`Objects of type ${object.TYPE} are not supported`)
             }
 
             const definition = structureDefinitions[object.TYPE]
@@ -93,65 +93,56 @@ export const parseCNV = (content: string) => {
                     }
                 } catch (err) {
                     if (err instanceof FieldProcessorRecoverableError) {
-                        console.warn(
-                            'Recoverable error occured\n' +
-                                `%cError%c: ${err.message}\n` +
-                                `%cObject name:%c ${objectName}\n` +
-                                `%cObject type:%c ${object.TYPE}\n` +
-                                `%cField name:%c ${fieldName}\n` +
-                                `%cParam:%c ${param}\n` +
-                                '%cValue:%c %O',
-                            'font-weight: bold',
-                            'font-weight: inherit',
-                            'font-weight: bold',
-                            'font-weight: inherit',
-                            'font-weight: bold',
-                            'font-weight: inherit',
-                            'font-weight: bold',
-                            'font-weight: inherit',
-                            'font-weight: bold',
-                            'font-weight: inherit',
-                            'font-weight: bold',
-                            'font-weight: inherit',
-                            value
+                        logger.error(
+                            'Recoverable error occured',
+                            {
+                                objectName,
+                                objectType: object.TYPE,
+                                object,
+                                fieldName,
+                                param,
+                                value,
+                            },
+                            err
                         )
                         continue
                     }
 
-                    console.error(
-                        'Failed to process CNV field\n' +
-                            `%cObject name:%c ${objectName}\n` +
-                            `%cObject type:%c ${object.TYPE}\n` +
-                            `%cField name:%c ${fieldName}\n` +
-                            `%cParam:%c ${param}\n` +
-                            '%cValue:%c %O',
-                        'font-weight: bold',
-                        'font-weight: inherit',
-                        'font-weight: bold',
-                        'font-weight: inherit',
-                        'font-weight: bold',
-                        'font-weight: inherit',
-                        'font-weight: bold',
-                        'font-weight: inherit',
-                        'font-weight: bold',
-                        'font-weight: inherit',
-                        value
+                    logger.error(
+                        'Failed to process CNV field',
+                        {
+                            objectName,
+                            objectType: object.TYPE,
+                            object,
+                            fieldName,
+                            param,
+                            value,
+                        },
+                        err
                     )
                     throw err
                 }
             } else {
                 if (variableName.startsWith('ON')) {
                     if (param) {
-                        console.warn(
-                            `Unsupported parametrized event callback "${variableName}" with param "${param}" in type ${object.TYPE}`
+                        logger.warn(
+                            `Unsupported parametrized event callback "${variableName}" with param "${param}" in type ${object.TYPE}`,
+                            {
+                                object,
+                            }
                         )
                     } else {
-                        console.warn(
-                            `Unsupported non-parametrized event callback "${variableName}" in type ${object.TYPE}`
+                        logger.warn(
+                            `Unsupported non-parametrized event callback "${variableName}" in type ${object.TYPE}`,
+                            {
+                                object,
+                            }
                         )
                     }
                 } else if (variableName !== 'TYPE') {
-                    console.warn(`Unsupported field ${variableName} in type ${object.TYPE}`)
+                    logger.warn(`Unsupported field ${variableName} in type ${object.TYPE}`, {
+                        object,
+                    })
                 }
                 object[variableName] = value
             }
@@ -164,7 +155,9 @@ export const parseCNV = (content: string) => {
             const typeInfo: FieldTypeEntry = typeDefinition[field]
 
             if (!(field in object) && !typeInfo?.flags?.optional) {
-                console.warn(`Field '${field}' in type ${object.TYPE} is missing but is not optional`)
+                logger.warn(`Field '${field}' in type ${object.TYPE} is missing but is not optional`, {
+                    object,
+                })
             }
         }
     }
