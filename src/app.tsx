@@ -79,7 +79,7 @@ export const App = () => {
             columnId: `column:${getNextColumnId()}`,
             name: event.name ?? '',
             opacity: event.transparency,
-            loopLength: event.loopAfterFrame,
+            loopLength: event.loopFramesEndIndex, // TODO: take into account update reksio-formats
             items: event.frames.map((frame, frameIndex) => ({
                 type: 'frame-card',
                 cardId: `card:${getNextCardId()}`,

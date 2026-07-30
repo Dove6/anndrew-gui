@@ -1,6 +1,6 @@
 import { BinaryBuffer } from '../utils'
-import { decompress as CLZWDecompress } from '../compression/clzw'
-import { decompress as CRLEDecompress } from '../compression/crle'
+import { decompressCLZW as CLZWDecompress } from '../compression/clzw'
+import { decompressCRLE as CRLEDecompress } from '../compression/crle'
 import { type CompressionType } from '../compression'
 import { annCompressionTypeMapping, type AnnImage } from '../ann';
 
@@ -27,7 +27,7 @@ interface ImageHeader extends CompressedImageHeader {
 
 export interface Image {
     header: ImageHeader
-    bytes: ArrayBuffer
+    bytes: ArrayBufferLike
 }
 
 export interface CompressionDescriptor {
@@ -110,43 +110,23 @@ const extractAlphaChannel = (data: Uint8ClampedArray) => {
 }
 
 // Based on https://github.com/mysliwy112/AM-transcoder/blob/master/src/image.cpp
-const convertToRgba32 = (bytes: Uint8Array) => {
-    const rgb = new Uint8Array((bytes.byteLength / 2) * 3)
-
-    let counter = 0;
-    for (let i = 0; i < bytes.byteLength; i++) {
-        let temp = (bytes[i * 2 + 1] << 8) | bytes[i * 2];
-        rgb[i * 3 + 2] = Math.round((temp & 0x1f) * 255 / 31);
-        temp >>= 5;
-        rgb[i * 3 + 1] = Math.round((temp & 0x3f) * 255 / 63);
-        temp >>= 6;
-        rgb[i * 3] = Math.round((temp & 0x1f) * 255 / 31);
-        counter += 3;
+const convertToRgba32 = (bytes: Uint8Array, alphaBytes?: Uint8Array): Uint8Array => {
+    const numPixels = bytes.byteLength >>> 1
+    const rgba = new Uint8Array(numPixels * 4)
+    const input16 = new Uint16Array(bytes.buffer, bytes.byteOffset, numPixels)
+    const pixels32 = new Uint32Array(rgba.buffer, rgba.byteOffset, numPixels)
+    const hasAlphaBytes = alphaBytes && alphaBytes.length > 0
+    for (let i = 0; i < numPixels; i++) {
+        let temp = input16[i]
+        const b = Math.round((temp & 0x1f) * 255 / 31)
+        temp >>>= 5
+        const g = Math.round((temp & 0x3f) * 255 / 63)
+        temp >>>= 6
+        const r = Math.round((temp & 0x1f) * 255 / 31)
+        const a = hasAlphaBytes ? alphaBytes![i] : 255
+        pixels32[i] = r | (g << 8) | (b << 16) | (a << 24)
     }
-
-    return rgb
-}
-
-// Based on https://github.com/mysliwy112/AM-transcoder/blob/master/src/image.cpp
-const addAlpha = (imgBytes: Uint8Array, alphaBytes: Uint8Array | undefined) => {
-    const output = new Uint8Array(imgBytes.byteLength + imgBytes.byteLength / 3)
-    let alphaPosition = 0
-    let colorPosition = 0
-
-    for (let i = 0; i < output.byteLength; i += 4) {
-        output[i] = imgBytes[colorPosition]
-        output[i + 1] = imgBytes[colorPosition + 1]
-        output[i + 2] = imgBytes[colorPosition + 2]
-        if (alphaBytes == undefined || alphaBytes.byteLength == 0) {
-            output[i + 3] = 255
-        } else {
-            output[i + 3] = alphaBytes[alphaPosition]
-        }
-        colorPosition += 3
-        alphaPosition++
-    }
-
-    return output
+    return rgba
 }
 
 // Based on https://github.com/mysliwy112/AM-transcoder/blob/master/src/image.cpp
@@ -228,9 +208,7 @@ export const loadImageWithoutHeader = (
     const colorBytes = decompressImageData(buffer, colorCompression)
     const alphaBytes = alphaCompression !== undefined ? decompressImageData(buffer, alphaCompression) : undefined
 
-    let imageBytes = convertToRgba32(colorBytes)
-    imageBytes = addAlpha(imageBytes, alphaBytes)
-    return imageBytes
+    return convertToRgba32(colorBytes, alphaBytes)
 }
 
 export const storeImageWithoutHeader = (

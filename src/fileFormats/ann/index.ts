@@ -1,5 +1,5 @@
 import { encode } from 'iconv-lite'
-import { BinaryBuffer, createGrowableDataView, stringUntilNull } from '../utils'
+import { BinaryBuffer, stringUntilNull, createGrowableDataView } from '../utils'
 import { type CompressedImageHeader, createDescriptors, loadImageWithoutHeader, storeImageWithoutHeader } from '../img'
 import type { CompressionType } from '../compression'
 
@@ -15,7 +15,7 @@ export const annCompressionTypeMapping: { [compressionType: number]: [Compressio
     4: ['CRLE', 'CRLE'],
 }
 
-interface AnnHeader {
+export interface AnnHeader {
     framesCount: number
     bpp: number
     eventsCount: number
@@ -30,14 +30,19 @@ interface AnnHeader {
 export interface Event {
     name: string
     framesCount: number
-    loopAfterFrame: number
+    loopFramesStartIndex: number
+    loopFramesEndIndex: number
+    loopRepeatsCount: number
+    fps: number
+    flags: number
     transparency: number
 
-    framesImageMapping: Array<number>
-    frames: Array<Frame>
+    framesImageMapping: number[]
+    frames: Frame[]
 }
 
 export interface Frame {
+    hasName: number
     positionX: number
     positionY: number
     hasSounds: number
@@ -69,7 +74,7 @@ const parseHeader = (view: BinaryBuffer) => {
     ann.framesCount = view.getUint16()
     ann.bpp = view.getUint16()
     ann.eventsCount = view.getUint16()
-    view.skip(0xd)
+    stringUntilNull(decoder.decode(view.read(0xd)))
     ann.fps = view.getUint32()
     ann.flags = view.getUint32()
     ann.transparency = view.getUint8()
@@ -110,24 +115,35 @@ const storeHeader = (header: AnnHeader, buffer: BinaryBuffer) => {
 
 const parseFrame = (view: BinaryBuffer) => {
     const frame = {} as Frame
-    view.skip(4)
-    view.skip(4)
+    frame.hasName = view.getUint32()
+    const hasUnknownData = view.getUint32()
+    if (hasUnknownData !== 0) {
+        const dataLen = view.getUint32()
+        view.skip(dataLen)
+    }
     frame.positionX = view.getInt16()
     frame.positionY = view.getInt16()
     view.skip(4)
     frame.hasSounds = view.getUint32()
     view.skip(4)
     frame.transparency = view.getUint8()
-    view.skip(5)
+    view.skip(1)
+    view.skip(4)
 
-    const nameSize = view.getUint32()
-    frame.name = stringUntilNull(decoder.decode(view.read(nameSize)))
+    if (frame.hasName !== 0) {
+        const nameSize = view.getUint32()
+        frame.name = stringUntilNull(decoder.decode(view.read(nameSize)))
+    } else {
+        frame.name = ''
+    }
 
-    if (frame.hasSounds != 0) {
+    if (frame.hasSounds !== 0) {
         const soundsLen = view.getUint32()
         frame.sounds = stringUntilNull(decoder.decode(view.read(soundsLen)))
             .split(';')
             .filter((x) => x.trim() !== '')
+    } else {
+        frame.sounds = []
     }
 
     return frame
@@ -162,9 +178,19 @@ const parseEvent = (view: BinaryBuffer) => {
     const event = {} as Event
     event.name = stringUntilNull(decoder.decode(view.read(0x20)))
     event.framesCount = view.getUint16()
-    view.skip(0x6)
-    event.loopAfterFrame = view.getUint32()
-    view.skip(0x4 + 0x6)
+    view.getUint32() // frame mapping buffer pointer? I think they just write runtime values here and its doesn't matter for a file format.
+    event.loopFramesStartIndex = view.getUint16()
+    event.loopFramesEndIndex = view.getUint16()
+    event.loopRepeatsCount = view.getUint16()
+    view.skip(0x2) // alignment padding
+    event.fps = view.getUint32()
+
+    // flags & 0x20000 - causes direction flip (ping-pong style) instead of jumping,
+    // doesn't seem to care about loopAllowedRepeats
+    // flags & 0x100000 - should wait for sound to stop playing?
+    // flags & 0x800000 - advance to the next event at event end?
+    event.flags = view.getUint32()
+
     event.transparency = view.getUint8()
     view.skip(0xc)
 
@@ -188,7 +214,8 @@ const storeEvent = (event: Event, buffer: BinaryBuffer) => {
 
     buffer.setUint16(event.framesCount)
     buffer.skip(0x6)
-    buffer.setUint32(event.loopAfterFrame % event.framesCount)
+    // TODO: mirror updated reksio-formats
+    buffer.setUint32(event.loopFramesEndIndex % event.framesCount)
     buffer.skip(0xa)
     buffer.setUint8(event.transparency)
     buffer.skip(0xc)
@@ -248,12 +275,12 @@ export const loadAnn = (data: ArrayBuffer) => {
         events.push(parseEvent(buffer))
     }
 
-    const annImages = []
+    const annImages: AnnImage[] = []
     for (let i = 0; i < header.framesCount; i++) {
         annImages.push(parseAnnImage(buffer))
     }
 
-    const images = []
+    const images: Uint8Array[] = []
     for (let i = 0; i < header.framesCount; i++) {
         const img = annImages[i]
         const { colorDescriptor, alphaDescriptor } = createDescriptors(img, annCompressionTypeMapping)

@@ -37,6 +37,7 @@
     "iconv-lite": "^0.7.0",
     "jimp": "^1.6.0",
     "jszip": "^3.10.1",
+    "lzo-ts": "^0.2.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "reksio-formats": "0.0.3",

@@ -1186,7 +1186,6 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 				return {
 					name: e.name.trim(),
 					transparency: e.opacity,
-					loopAfterFrame: e.loopLength,
 					framesCount: e.items.length,
 					framesImageMapping: frames.map(f => images.findIndex(i => i.cardId === f.imageRef.cardId)),
 					frames: frames.map(f => ({
@@ -1194,9 +1193,17 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 						positionY: f.offset.y,
 						hasSounds: f.sfx.length > 0 ? 1 : 0,
 						transparency: f.opacity,
-						name: f.name.trim(),
 						sounds: f.sfx,
+						// TODO: put more sense into the values below
+						hasName: 0,
+						name: f.name.trim(),
 					})),
+					// TODO: put more sense into the values below
+					loopFramesStartIndex: 0,
+					loopFramesEndIndex: e.loopLength,
+					loopRepeatsCount: 0,
+					fps: 0,
+					flags: 0,
 				};
 			}),
 			annImages: images.map((image, index) => ({

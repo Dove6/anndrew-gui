@@ -92,6 +92,9 @@ importers:
       jszip:
         specifier: ^3.10.1
         version: 3.10.1
+      lzo-ts:
+        specifier: ^0.2.3
+        version: 0.2.3
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -1705,6 +1708,9 @@ packages:
 
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
+
+  lzo-ts@0.2.3:
+    resolution: {integrity: sha512-Trc7OsInRIUWfZQuGCJR70rx0XCcAh3wnHu4XQ8BJ9YxEHkgT4HUYlIKlkmXu4lSCeuXHYxr9m0wJwfH4ViWDg==}
 
   make-dir@2.1.0:
     resolution: {integrity: sha512-LS9X+dc8KLxXCb8dni79fLIIUA5VyZoyjSMCwTluaXA0o27cCK0bhXkpgw+sTXVpPy/lSO57ilRixqk0vDmtRA==}
@@ -4212,6 +4218,8 @@ snapshots:
   lru-cache@5.1.1:
     dependencies:
       yallist: 3.1.1
+
+  lzo-ts@0.2.3: {}
 
   make-dir@2.1.0:
     dependencies:
