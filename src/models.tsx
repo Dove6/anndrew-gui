@@ -7,6 +7,7 @@ export type BoardState = {
 	opacity: number,
 	author: string,
 	description: string,
+	compressed: boolean,
 
 	lastOperation: Operation | null;
 };
@@ -17,6 +18,7 @@ export type BoardUpdate = {
 	opacity?: number,
 	author?: string,
 	description?: string,
+	compressed?: boolean,
 }
 
 export type ColumnMap = { [columnId: string]: ColumnData };

@@ -308,7 +308,7 @@ export const dumpAnn = (ann: ANN) => {
 
     const annImages = new Array(ann.annImages.length)
     for (let i = 0; i < ann.header.framesCount; i++) {
-        const { header, compressedColor, compressedAlpha } = storeImageWithoutHeader({ ...ann.annImages[i], compressionType: 0 }, ann.images[i])
+        const { header, compressedColor, compressedAlpha } = storeImageWithoutHeader(ann.annImages[i], ann.images[i])
         annImages[i] = header
         storedParts.push(compressedColor)
         if (header.alphaLen !== 0) {

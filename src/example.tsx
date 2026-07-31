@@ -894,7 +894,7 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 	);
 
 	const updateBoard = useCallback(
-		({ boardUpdate }: { boardUpdate: BoardUpdate; }) => {
+		(boardUpdate: BoardUpdate) => {
 			setData((data) => {
 				return {
 					...data,
@@ -903,6 +903,7 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 					opacity: boardUpdate.opacity === undefined ? data.opacity : boardUpdate.opacity,
 					author: boardUpdate.author === undefined ? data.author : boardUpdate.author,
 					description: boardUpdate.description === undefined ? data.description : boardUpdate.description,
+					compressed: boardUpdate.compressed === undefined ? data.compressed : boardUpdate.compressed,
 				};
 			});
 		},
@@ -1137,7 +1138,6 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 			flashColumn,
 			updateCard,
 			updateColumn,
-			updateBoard,
 			instanceId,
 		};
 	}, [
@@ -1160,7 +1160,6 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 		flashColumn,
 		updateCard,
 		updateColumn,
-		updateBoard,
 		instanceId,
 ]);
 
@@ -1212,7 +1211,7 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 				height: bitmaps[index].height,
 				positionX: image.offset.x,
 				positionY: image.offset.y,
-				compressionType: 0,
+				compressionType: data.compressed ? 2 : 0,
 				imageLen: bitmaps[index].data.byteLength >> 1,
 				alphaLen: bitmaps[index].data.byteLength >> 2,
 			})),
@@ -1227,7 +1226,7 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 
 	return (
 		<BoardContext.Provider value={contextValue}>
-			<General {...data} onClear={onClear} onSave={onSave} />
+			<General {...data} onUpdate={updateBoard} onClear={onClear} onSave={onSave} />
 			<hr style={{ color: 'gray' }} />
 			<Board>
 				{imageColumns.map((column, order) => {

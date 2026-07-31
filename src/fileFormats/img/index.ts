@@ -1,5 +1,5 @@
 import { BinaryBuffer } from '../utils'
-import { decompressCLZW as CLZWDecompress } from '../compression/clzw'
+import { decompressCLZW as CLZWDecompress, compressCLZW as CLZWCompress } from '../compression/clzw'
 import { decompressCRLE as CRLEDecompress } from '../compression/crle'
 import { type CompressionType } from '../compression'
 import { annCompressionTypeMapping, type AnnImage } from '../ann';
@@ -260,9 +260,10 @@ const decompressImageData = (buffer: BinaryBuffer, descriptor: CompressionDescri
                 )
             )
         case 'CLZW_IN_CRLE':
+            const decompressed = CLZWDecompress(buffer);
             return new Uint8Array(
                 CRLEDecompress(
-                    new BinaryBuffer(new DataView(CLZWDecompress(buffer))),
+                    new BinaryBuffer(new DataView(decompressed.buffer, decompressed.byteOffset, decompressed.byteLength)),
                     descriptor.decompressedLen,
                     descriptor.pixelLen
                 )
@@ -277,8 +278,9 @@ const decompressImageData = (buffer: BinaryBuffer, descriptor: CompressionDescri
 const compressImageData = (data: Uint8Array<ArrayBuffer>, descriptor: CompressionDescriptor) => {
     switch (descriptor.compressionType) {
         case 'NONE':
-            return data;
+            return data
         case 'CLZW':
+            return CLZWCompress(data)
         case 'CRLE':
         case 'CLZW_IN_CRLE':
         case 'JPEG':

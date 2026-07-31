@@ -105,6 +105,7 @@ export const App = () => {
             description: ann.header.description,
             fps: ann.header.fps,
             opacity: ann.header.transparency,
+            compressed: ann.annImages.some(image => image.compressionType !== 0),
 
             lastOperation: null,
         });
@@ -128,6 +129,7 @@ export const App = () => {
             description: '',
             fps: 16,
             opacity: 255,
+            compressed: true,
 
             lastOperation: null,
         });

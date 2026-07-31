@@ -14,6 +14,7 @@
     "@atlaskit/app-provider": "^3.2.6",
     "@atlaskit/avatar": "^25.5.1",
     "@atlaskit/button": "^23.5.4",
+    "@atlaskit/checkbox": "^18.2.1",
     "@atlaskit/css-reset": "^7.3.9",
     "@atlaskit/dropdown-menu": "^16.3.17",
     "@atlaskit/ds-lib": "^5.2.0",

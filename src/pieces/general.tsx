@@ -1,13 +1,14 @@
 // eslint-disable-next-line @atlaskit/design-system/no-emotion-primitives -- to be migrated to @atlaskit/primitives/compiled – go/akcss
 import { Box, Inline, xcss } from '@atlaskit/primitives';
+import { Checkbox } from '@atlaskit/checkbox';
 import Textfield from '@atlaskit/textfield';
 import { IconButton } from '@atlaskit/button/new';
 import DeleteIcon from '@atlaskit/icon/core/delete';
-import { useBoardContext } from './board-context';
 import Image from '@atlaskit/image';
 import Krabik from '../Krabik.png';
 import { parseOpacity, stringifyOpacity, toInteger } from '../sanitization';
 import { blurOnEnterDown } from '../event-handling';
+import type { BoardUpdate } from '../models';
 
 type GeneralProps = {
 	filename: string;
@@ -15,6 +16,8 @@ type GeneralProps = {
 	description: string;
 	fps: number;
 	opacity: number;
+	compressed: boolean;
+	onUpdate: (boardUpdate: BoardUpdate) => void;
 	onClear: () => void;
 	onSave: () => void;
 };
@@ -38,8 +41,8 @@ const propertiesBox = xcss({
 	overflow: 'auto',
 });
 
-const General = ({ filename, author, description, fps, opacity, onClear, onSave }: GeneralProps) => {
-	const { updateBoard } = useBoardContext();
+const General = ({ filename, author, description, fps, opacity, compressed, onUpdate, onClear, onSave }: GeneralProps) => {
+	const checkboxId = "general-compressed-checkbox";
 
 	return (
 		<Box xcss={generalStyles}>
@@ -69,7 +72,7 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 						defaultValue={filename}
 						onKeyDown={blurOnEnterDown}
 						onBlur={e => {
-							updateBoard({ boardUpdate: { filename: e.currentTarget.value } });
+							onUpdate({ filename: e.currentTarget.value });
 							e.currentTarget.setSelectionRange(0, 0);
 						}}
 						style={{ paddingBlock: '1px', textAlign: 'right', width: '100%' }}
@@ -91,7 +94,7 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 						defaultValue={author}
 						onKeyDown={blurOnEnterDown}
 						onBlur={e => {
-							updateBoard({ boardUpdate: { author: e.currentTarget.value } });
+							onUpdate({ author: e.currentTarget.value });
 							e.currentTarget.setSelectionRange(0, 0);
 						}}
 						style={{ paddingBlock: '1px', textAlign: 'right', width: '100%' }}
@@ -118,7 +121,7 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 								e.currentTarget.focus();
 								return;
 							}
-							updateBoard({ boardUpdate: { description } });
+							onUpdate({ description });
 							e.currentTarget.setSelectionRange(0, 0);
 						}}
 						style={{ paddingBlock: '1px', textAlign: 'right', width: '100%' }}
@@ -141,7 +144,7 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 						onBlur={e => {
 							const validatedValue = Math.max(1, toInteger(e.currentTarget.value));
 							e.currentTarget.value = String(validatedValue);
-							updateBoard({ boardUpdate: { fps: validatedValue } });
+							onUpdate({ fps: validatedValue });
 							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
 						}}
 						style={{ paddingBlock: '1px', textAlign: 'right', width: '100%' }}
@@ -164,7 +167,7 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 						onBlur={e => {
 							const validatedValue = parseOpacity(e.currentTarget.value);
 							e.currentTarget.value = stringifyOpacity(validatedValue);
-							updateBoard({ boardUpdate: { opacity: validatedValue } });
+							onUpdate({ opacity: validatedValue });
 							e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length);
 						}}
 						style={{ paddingBlock: '1px', textAlign: 'right', width: '100%' }}
@@ -178,6 +181,14 @@ const General = ({ filename, author, description, fps, opacity, onClear, onSave 
 						}}
 					/>
 					<span>%</span>
+				</Inline>
+				<Inline alignBlock="baseline">
+					<span style={{ marginRight: '0.5em' }}><label htmlFor={checkboxId}>Compressed:</label></span>
+					<Checkbox
+						id={checkboxId}
+						defaultChecked={compressed}
+						onClick={_ => onUpdate({ compressed: !compressed })}
+					/>
 				</Inline>
 			</Box>
 			<IconButton
