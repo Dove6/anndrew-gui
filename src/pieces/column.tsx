@@ -44,7 +44,7 @@ import { useBoardContext } from './board-context';
 import { Card } from './card';
 import { ColumnContext, type ColumnContextProps, useColumnContext } from './column-context';
 import Textfield from '@atlaskit/textfield';
-import { mod, parseOpacity, stringifyOpacity, toInteger } from '../sanitization';
+import { mod, parseOpacity, stringifyOpacity, toInteger, validateEventName } from '../sanitization';
 import { allowTextSelection, blurOnEnterDown, disallowTextSelection, handleException } from '../event-handling';
 import { ImageAdder } from './image-adder';
 import JSZip from 'jszip';
@@ -429,26 +429,22 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 											onMouseDown={allowTextSelection(columnRef)}
 											onMouseLeave={disallowTextSelection(columnRef)}
 											onBlur={e => {
-												const name = e.currentTarget.value;
-												for (const event of getColumns()) {
-													if (event.columnId === columnId || event.type === 'image-column' || (event.type === 'event-column' && event.name !== name)) {
-														continue;
+												const oldName = column.name;
+												const otherNames = getColumns().filter(event => event.type === 'event-column' && event.columnId !== columnId)
+													.map(event => event as EventColumn)
+													.map(event => event.name);
+												let newName: string = e.currentTarget.value.trim();
+												let error = null;
+												while ((error = validateEventName(newName, otherNames)) !== undefined) {
+													const answer = prompt(`Invalid event name!\n${error}\nOld name: ${oldName}\nNew name:`, newName);
+													if (answer === null) {
+														e.currentTarget.value = oldName;
+														return;
 													}
-													alert('Event name must be unique!');
-													e.currentTarget.focus();
-													return;
+													newName = answer.trim();
 												}
-												if (name.length > 32) {
-													alert('Event name cannot be longer than 32 characters!');
-													e.currentTarget.focus();
-													return;
-												}
-												if (name.indexOf(' ') >= 0) {
-													alert('Event name must not contain spaces!');
-													e.currentTarget.focus();
-													return;
-												}
-												updateColumn({ columnId, columnUpdate: { type: 'event-column', name } });
+												e.currentTarget.value = newName;
+												updateColumn({ columnId, columnUpdate: { type: 'event-column', name: newName } });
 												e.currentTarget.setSelectionRange(0, 0);
 											}}
 											style={{ paddingBlock: '1px', fontSize: 'small' }}
