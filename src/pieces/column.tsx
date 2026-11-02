@@ -30,24 +30,24 @@ import {
 	draggable,
 	dropTargetForElements,
 } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
-import { dropTargetForExternal } from '@atlaskit/pragmatic-drag-and-drop/external/adapter';
 import { centerUnderPointer } from '@atlaskit/pragmatic-drag-and-drop/element/center-under-pointer';
 import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview';
+import { dropTargetForExternal } from '@atlaskit/pragmatic-drag-and-drop/external/adapter';
 import { containsFiles } from '@atlaskit/pragmatic-drag-and-drop/external/file';
 // eslint-disable-next-line @atlaskit/design-system/no-emotion-primitives -- to be migrated to @atlaskit/primitives/compiled – go/akcss
 import { Box, Flex, Inline, Stack, xcss } from '@atlaskit/primitives';
 import { token } from '@atlaskit/tokens';
 
-import { getNextCardId, getNextColumnId, type ColumnData, type EventColumn, type ImageCard, type ImageColumn } from '../models';
+import { type ColumnData, type EventColumn, getNextCardId, getNextColumnId, type ImageCard, type ImageColumn } from '../models';
 
+import Textfield from '@atlaskit/textfield';
+import JSZip from 'jszip';
+import { allowTextSelection, blurOnEnterDown, disallowTextSelection, handleException } from '../event-handling';
+import { mod, parseOpacity, stringifyOpacity, toInteger, validateEventName } from '../sanitization';
 import { useBoardContext } from './board-context';
 import { Card } from './card';
 import { ColumnContext, type ColumnContextProps, useColumnContext } from './column-context';
-import Textfield from '@atlaskit/textfield';
-import { mod, parseOpacity, stringifyOpacity, toInteger, validateEventName } from '../sanitization';
-import { allowTextSelection, blurOnEnterDown, disallowTextSelection, handleException } from '../event-handling';
 import { ImageAdder } from './image-adder';
-import JSZip from 'jszip';
 
 async function savePngImagesAsZip(filename: string, images: ImageCard[]) {
 	const zip = new JSZip();
@@ -369,14 +369,14 @@ export const Column = ({ column, order }: { column: ColumnData, order: number })
 
 	const helpText = isImageColumn ? <>
 		<span style={{ fontWeight: 'bold' }}>No images here!</span>
-		<br/>
+		<br />
 		<span>
 			To insert an image, drag an image file (in JPEG, PNG, BMP, TIFF, GIF, or IMG format) from your disk
 			and drop it here, inside the Images column. You can also click the Upload file button below.
 		</span>
 	</> : <>
 		<span style={{ fontWeight: 'bold' }}>No frames here!</span>
-		<br/>
+		<br />
 		<span>
 			To insert a frame, drag an image card from the Images column
 			and drop it here, inside the Event column.
