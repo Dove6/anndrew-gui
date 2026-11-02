@@ -48,7 +48,10 @@ export const ImageAdder = ({ columnId }: { columnId: string }) => {
 							type: 'image-card',
 							name,
 							contentUrl,
-							offset,
+							offset: {
+								x: offset.x ?? 0,
+								y: offset.y ?? 0,
+							},
 						},
 					});
 				};

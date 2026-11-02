@@ -973,7 +973,10 @@ export default function BoardExample({ instanceId, initialData, onClear }: { ins
 									cardId: `card:${getNextCardId()}`,
 									name,
 									contentUrl,
-									offset,
+									offset: {
+										x: offset.x ?? 0,
+										y: offset.y ?? 0,
+									},
 								},
 								finishColumnId,
 								itemIndexInFinishColumn,
