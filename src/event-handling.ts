@@ -52,8 +52,8 @@ export const readImageFile = async (file?: File) => {
             name,
             contentUrl: await image.getBase64('image/png'),
             offset: {
-                x: 0,
-                y: 0,
+                x: undefined,
+                y: undefined,
             },
         };
     }
